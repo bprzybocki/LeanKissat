@@ -358,7 +358,11 @@ termination_by n - i
 
 /-- Port of `bump_analyzed_variable_scores` (bump.c). -/
 def bumpAnalyzedVariableScores (s : Solver) : Solver :=
-  let (scores, scinc) := s.bumpScoresLoop s.scores s.scinc 0 s.analyzed.size
+  -- Take the heap out of `s` first: the loop also reads `s`, and a shared heap would be
+  -- copied on every update.
+  let scores := s.scores
+  let s := { s with scores := {} }
+  let (scores, scinc) := s.bumpScoresLoop scores s.scinc 0 s.analyzed.size
   let (scores, scinc) := bumpIncPair s.options.decay scores scinc
   { s with scores := scores, scinc := scinc }
 

@@ -65,7 +65,7 @@ def noAllPositiveClauses (s : Solver) : Bool := Id.run do
 /-- `kissat_internal_assume` with its preconditions checked: the literal is valid and
   unassigned and the trail is fully propagated (C asserts these; the port stops with
   `unknown` if they fail). -/
-def luckyAssume (s : Solver) (lit : Lit) : Option Solver :=
+@[inline] def luckyAssume (s : Solver) (lit : Lit) : Option Solver :=
   if IDX lit < s.vars && s.value lit == 0 && s.propagate == s.asg.trail.size then
     some (s.internalAssume lit)
   else none

@@ -122,7 +122,7 @@ theorem modelOf_of_true {Φ : (Nat → Bool) → Prop} {t : Solver} (hs : SInv �
   have c2 : (t.importBits.get! (l.1 + 1) &&& ImportBits.imported == 0) = false := by simpa using e2
   have c3 : (t.importBits.get! (l.1 + 1) &&& ImportBits.eliminated != 0) = false := by simp [e3]
   have hpos : ¬ ((l.1 : Int) + 1 < 0) := by omega
-  simp only [c1, c2, c3, e1, hpos, if_false, Bool.false_eq_true]
+  simp only [c1, c2, c3, e1, hpos, ite_false, Bool.false_eq_true]
   unfold impLit at ht
   cases hb : l.2
   · rw [hb] at ht; simp only [Bool.false_eq_true, ite_false] at ht

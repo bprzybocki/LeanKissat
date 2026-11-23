@@ -16,29 +16,29 @@ theorem flushLoop_incons (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec
   intro s out p
   induction s, out, p using flushLoop.induct lit litFixed start ws with
   | case1 s out p hp head hb other hfix ih =>
-    rw [flushLoop, dif_pos hp]; dsimp only
-    rw [if_pos (show watchIsBinary ws[p] = true from hb),
-      if_pos (show (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true from hfix)]
+    rw [flushLoop, dite_eq_left hp]; dsimp only
+    rw [ite_eq_left (show watchIsBinary ws[p] = true from hb),
+      ite_eq_left (show (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true from hfix)]
     have := ih; simp only [dite_eq_ite] at this; rw [this]
     split
     · have := congrArg Solver.inconsistent (strip_deleteBinary s lit (watchLit ws[p])); exact this
     · rfl
   | case2 s out p hp head hb other hfix ih =>
-    rw [flushLoop, dif_pos hp]; dsimp only
-    rw [if_pos (show watchIsBinary ws[p] = true from hb),
-      if_neg (show ¬ (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true from hfix)]
+    rw [flushLoop, dite_eq_left hp]; dsimp only
+    rw [ite_eq_left (show watchIsBinary ws[p] = true from hb),
+      ite_eq_right (show ¬ (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true from hfix)]
     exact ih
   | case3 s out p hp head hb tail hlt ih =>
-    rw [flushLoop, dif_pos hp]; dsimp only
-    rw [if_neg (show ¬ watchIsBinary ws[p] = true from hb),
-      if_pos (show watchRef (ws.get! (p + 1)) < start from hlt)]
+    rw [flushLoop, dite_eq_left hp]; dsimp only
+    rw [ite_eq_right (show ¬ watchIsBinary ws[p] = true from hb),
+      ite_eq_left (show watchRef (ws.get! (p + 1)) < start from hlt)]
     exact ih
   | case4 s out p hp head hb tail hlt ih =>
-    rw [flushLoop, dif_pos hp]; dsimp only
-    rw [if_neg (show ¬ watchIsBinary ws[p] = true from hb),
-      if_neg (show ¬ watchRef (ws.get! (p + 1)) < start from hlt)]
+    rw [flushLoop, dite_eq_left hp]; dsimp only
+    rw [ite_eq_right (show ¬ watchIsBinary ws[p] = true from hb),
+      ite_eq_right (show ¬ watchRef (ws.get! (p + 1)) < start from hlt)]
     exact ih
-  | case5 s out p hp => rw [flushLoop, dif_neg hp]
+  | case5 s out p hp => rw [flushLoop, dite_eq_right hp]
 
 theorem flushAll_incons (u : Solver) (start : Ref) :
     (u.flushAllWatchedClauses start).inconsistent = u.inconsistent := by
@@ -48,7 +48,7 @@ theorem flushAll_incons (u : Solver) (start : Ref) :
     intro s i
     induction s, i using flushAllLoop.induct start n with
     | case1 s i hi lit ih =>
-      rw [flushAllLoop, if_pos hi]; dsimp only
+      rw [flushAllLoop, ite_eq_left hi]; dsimp only
       rw [ih]
       unfold flushWatchedClausesByLiteral
       show (flushLoop _ _ _ _ (s.flushWatchedClausesByLiteral lit start) _ _).1.inconsistent = _
@@ -56,7 +56,7 @@ theorem flushAll_incons (u : Solver) (start : Ref) :
       unfold flushWatchedClausesByLiteral
       show (flushLoop _ _ _ _ s _ _).1.inconsistent = _
       rw [flushLoop_incons]
-    | case2 s i hi => rw [flushAllLoop, if_neg hi]
+    | case2 s i hi => rw [flushAllLoop, ite_eq_right hi]
   exact this u 0
 
 theorem sweepBinary_incons (s : Solver) (dst src : Ref) (L : SweepLits) :
@@ -199,11 +199,11 @@ theorem flushAndMark_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (hS : Sear
       dsimp only at k1 k2 k3 ⊢
       cases res with
       | none =>
-        rw [if_neg (by simp)]
+        rw [ite_eq_right (by simp)]
         obtain ⟨n1, n2, n3⟩ := k2 rfl
         exact ⟨n1.incons, Or.inr ⟨n1, hm0.trans k1, n2, rbp_level0 n1.inv n3 start⟩⟩
       | some c =>
-        rw [if_pos (by simp)]
+        rw [ite_eq_left (by simp)]
         exact ⟨k3 c rfl, Or.inl rfl⟩
     · rename_i _ hlv
       have hl0 : s.level = 0 := by simpa using hlv
@@ -235,7 +235,7 @@ theorem reaches_split {a : Arena} {start : Ref} : ∀ (fuel : Nat) (r : Ref) (re
     unfold Arena.reaches at hr
     by_cases e : r = start
     · subst e; exact ⟨[], rest, rfl, by simp, hl⟩
-    · rw [if_neg (by simpa using e)] at hr
+    · rw [ite_eq_right (by simpa using e)] at hr
       split at hr
       · rename_i hc
         simp only [Bool.and_eq_true, decide_eq_true_eq] at hc
@@ -254,7 +254,7 @@ theorem unusedWatches_spec (s : Solver) : ∀ j, s.unusedWatchesEmpty j = true �
   induction j using unusedWatchesEmpty.induct s with
   | case1 j hj ih =>
     intro h k hk hks
-    rw [unusedWatchesEmpty, dif_pos hj] at h
+    rw [unusedWatchesEmpty, dite_eq_left hj] at h
     simp only [Bool.and_eq_true, beq_iff_eq] at h
     by_cases e : k = j
     · subst e; exact h.1
@@ -262,7 +262,7 @@ theorem unusedWatches_spec (s : Solver) : ∀ j, s.unusedWatchesEmpty j = true �
   | case2 j hj =>
     intro _ k hk hks; omega
 
-theorem unused_entries {Φ : (Nat → Bool) → Prop} {s : Solver} (hs : SInv Φ s)
+theorem unused_entries {Φ : (Nat → Bool) → Prop} {s : Solver} (_hs : SInv Φ s)
     (h : s.unusedWatchesEmpty (2 * s.vars.toNat) = true) :
     ∀ l, ¬ (IDX l).toNat < s.vars.toNat → s.entries l = [] := by
   intro l hl
@@ -313,10 +313,10 @@ theorem reduceFrom_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (hS : Search
   obtain ⟨ok, x⟩ := R
   dsimp only at a1 a2 a3 ⊢
   subst a1
-  rw [if_neg (by simp)]
+  rw [ite_eq_right (by simp)]
   by_cases hnp : x.notPorted = true
-  · rw [if_pos hnp]; exact ⟨a2, Or.inl (Or.inr (Or.inr hnp))⟩
-  rw [if_neg hnp]
+  · rw [ite_eq_left hnp]; exact ⟨a2, Or.inl (Or.inr (Or.inr hnp))⟩
+  rw [ite_eq_right hnp]
   rcases a3 with h | ⟨hx, hmx, hpx, hrb⟩
   · exact absurd h hnp
   split
@@ -467,7 +467,7 @@ theorem reduce_ok (Φ : (Nat → Bool) → Prop) : ReduceOK Φ Solver.reduce := 
   show s4.inconsistent = true
   by_cases hi : s4.inconsistent = true
   · exact hi
-  · rw [if_neg hi] at e; simp at e
+  · rw [ite_eq_right hi] at e; simp at e
 
 end Solver
 end LeanKissat

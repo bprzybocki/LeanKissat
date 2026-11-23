@@ -33,7 +33,7 @@ theorem strip_deleteBinary (s : Solver) (a b : Lit) : strip (s.deleteBinary a b)
   have h2 := strip_markRemovedLiteral (s.markRemovedLiteral a) b
   generalize (s.markRemovedLiteral a).markRemovedLiteral b = u at h2
   generalize s.markRemovedLiteral a = u' at h1 h2
-  simp only [Bool.true_eq_false, ite_true, ite_false]
+  simp only [ite_true]
   exact (show strip { u with stats := _ } = strip u from rfl).trans (h2.trans h1)
 
 theorem fixedValue_congr {s t : Solver} (h : t.asg = s.asg) (l : Lit) : t.fixedValue l = s.fixedValue l := by
@@ -71,7 +71,7 @@ theorem flushLoop_spec (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec) 
     intro R hs hd hwf
     have hb' : watchIsBinary ws[p] = true := hb
     have hfix' : (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true := hfix
-    rw [flushLoop, dif_pos hp]; dsimp only; rw [if_pos hb', if_pos hfix']
+    rw [flushLoop, dite_eq_left hp]; dsimp only; rw [ite_eq_left hb', ite_eq_left hfix']
     have hL : p < ws.data.toList.length := by simpa [WVec.size] using hp
     have hw : ws[p] = ws.data.toList[p] := wvec_getElem_eq ws p hp
     cases R with
@@ -104,12 +104,12 @@ theorem flushLoop_spec (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec) 
       have hasg : s.asg = s0.asg := by have := congrArg Solver.asg hs; exact this
       have hk : flushKeep s0 litFixed start (.bin o) = false := by
         simp only [flushKeep, ← ho, ← fixedValue_congr hasg other]; simp [hfix]
-      simp [List.filter_cons, hk]
+      simp [hk]
   | case2 s out p hp head hb other hfix ih =>
     intro R hs hd hwf
     have hb' : watchIsBinary ws[p] = true := hb
     have hfix' : ¬ (vTrue litFixed || vTrue (s.fixedValue (watchLit ws[p]))) = true := hfix
-    rw [flushLoop, dif_pos hp]; dsimp only; rw [if_pos hb', if_neg hfix']
+    rw [flushLoop, dite_eq_left hp]; dsimp only; rw [ite_eq_left hb', ite_eq_right hfix']
     have hL : p < ws.data.toList.length := by simpa [WVec.size] using hp
     have hw : ws[p] = ws.data.toList[p] := wvec_getElem_eq ws p hp
     cases R with
@@ -137,12 +137,12 @@ theorem flushLoop_spec (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec) 
       have hasg : s.asg = s0.asg := by have := congrArg Solver.asg hs; exact this
       have hk : flushKeep s0 litFixed start (.bin o) = true := by
         simp only [flushKeep, ← ho, ← fixedValue_congr hasg other]; simpa using hfix
-      simp [List.filter_cons, hk, encodeWatches, WEntry.words, ho]
+      simp [hk, encodeWatches, WEntry.words, ho]
   | case3 s out p hp head hb tail hlt ih =>
     intro R hs hd hwf
     have hb' : ¬ watchIsBinary ws[p] = true := hb
     have hlt' : watchRef (ws.get! (p + 1)) < start := hlt
-    rw [flushLoop, dif_pos hp]; dsimp only; rw [if_neg hb', if_pos hlt']
+    rw [flushLoop, dite_eq_left hp]; dsimp only; rw [ite_eq_right hb', ite_eq_left hlt']
     have hL : p < ws.data.toList.length := by simpa [WVec.size] using hp
     have hw : ws[p] = ws.data.toList[p] := wvec_getElem_eq ws p hp
     cases R with
@@ -174,12 +174,12 @@ theorem flushLoop_spec (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec) 
       have hk : flushKeep s0 litFixed start (.large b r) = true := by
         simp only [flushKeep, ← hr]; simpa using hlt
       have hh : head = blockingWatch b := by show ws[p] = _; rw [hw, h1]
-      simp [List.filter_cons, hk, encodeWatches, WEntry.words, hh, ht]
+      simp [hk, encodeWatches, WEntry.words, hh, ht]
   | case4 s out p hp head hb tail hlt ih =>
     intro R hs hd hwf
     have hb' : ¬ watchIsBinary ws[p] = true := hb
     have hlt' : ¬ watchRef (ws.get! (p + 1)) < start := hlt
-    rw [flushLoop, dif_pos hp]; dsimp only; rw [if_neg hb', if_neg hlt']
+    rw [flushLoop, dite_eq_left hp]; dsimp only; rw [ite_eq_right hb', ite_eq_right hlt']
     have hL : p < ws.data.toList.length := by simpa [WVec.size] using hp
     have hw : ws[p] = ws.data.toList[p] := wvec_getElem_eq ws p hp
     cases R with
@@ -210,10 +210,10 @@ theorem flushLoop_spec (lit : Lit) (litFixed : Value) (start : Ref) (ws : WVec) 
       rw [k2]
       have hk : flushKeep s0 litFixed start (.large b r) = false := by
         simp only [flushKeep, ← hr]; simpa using hlt
-      simp [List.filter_cons, hk]
+      simp [hk]
   | case5 s out p hp =>
     intro R hs hd hwf
-    rw [flushLoop, dif_neg hp]
+    rw [flushLoop, dite_eq_right hp]
     refine ⟨hs, ?_⟩
     cases R with
     | nil => simp [encodeWatches]
@@ -230,12 +230,12 @@ theorem watchesOf_modify (s : Solver) (lit l : Lit) (f : WVec → WVec) :
   by_cases hl : l.toNat < s.watches.size
   · rw [getElem!_pos (s.watches.modify lit.toNat f) l.toNat (by simpa using hl), Array.getElem_modify]
     by_cases e : l = lit
-    · subst e; simp [hl, watchesOf, getElem!_pos s.watches l.toNat hl]
+    · subst e; simp [hl, watchesOf]
     · have : lit.toNat ≠ l.toNat := fun h => e (UInt32.toNat_inj.mp h).symm
       simp [this, e, watchesOf, getElem!_pos s.watches l.toNat hl]
   · have e : ¬ (l = lit ∧ lit.toNat < s.watches.size) := by
       rintro ⟨rfl, h⟩; exact hl h
-    rw [if_neg e, getElem!_neg _ l.toNat (by simpa using hl)]
+    rw [ite_eq_right e, getElem!_neg _ l.toNat (by simpa using hl)]
     simp only [watchesOf]; rw [getElem!_neg s.watches l.toNat hl]
 
 theorem modifyWatches_size (s : Solver) (lit : Lit) (f : WVec → WVec) :
@@ -272,12 +272,12 @@ theorem flushLit_spec (s : Solver) (lit : Lit) (start : Ref) (hw : WordsOK (s.wa
     by_cases e : l = lit
     · subst e
       by_cases hlt : l.toNat < r.1.watches.size
-      · rw [if_pos ⟨rfl, hlt⟩, if_pos rfl, k2]; simp [WVec.empty, flushedWords]
-      · rw [if_neg (fun h => hlt h.2), if_pos rfl, hwo]
+      · rw [ite_eq_left ⟨rfl, hlt⟩, ite_eq_left rfl, k2]; simp [WVec.empty, flushedWords]
+      · rw [ite_eq_right (fun h => hlt h.2), ite_eq_left rfl, hwo]
         rw [hws] at hlt
         unfold flushedWords entries
         rw [watchesOf_oob hlt]; rfl
-    · rw [if_neg (fun h => e h.1), if_neg e, hwo]
+    · rw [ite_eq_right (fun h => e h.1), ite_eq_right e, hwo]
 
 theorem flushedWords_congr {s t : Solver} (ha : t.asg = s.asg) (lit : Lit)
     (hw : (t.watchesOf lit).data.toList = (s.watchesOf lit).data.toList) (start : Ref) :
@@ -301,7 +301,7 @@ theorem flushAllLoop_spec (s0 : Solver) (start : Ref) (n : Nat) (hn : n < 2 ^ 30
   induction s, i using flushAllLoop.induct start n with
   | case1 s i hi lit ih =>
     intro hs hsz hws
-    rw [flushAllLoop, if_pos hi]
+    rw [flushAllLoop, ite_eq_left hi]
     dsimp only
     have hasg : s.asg = s0.asg := by have := congrArg Solver.asg hs; exact this
     have hidx : (IDX lit).toNat = i := by
@@ -309,11 +309,11 @@ theorem flushAllLoop_spec (s0 : Solver) (start : Ref) (n : Nat) (hn : n < 2 ^ 30
       rw [IDX_LIT_toNat _ (by simp; omega)]; simp; omega
     have hne : NOT lit ≠ lit := NOT_ne lit
     have w1 : WordsOK (s.watchesOf lit).data.toList := by
-      rw [hws lit, if_neg (by omega)]; exact hw0 lit
+      rw [hws lit, ite_eq_right (by omega)]; exact hw0 lit
     obtain ⟨a1, a2, a3⟩ := flushLit_spec s lit start w1
     generalize s.flushWatchedClausesByLiteral lit start = s1 at a1 a2 a3 ih
     have w2 : WordsOK (s1.watchesOf (NOT lit)).data.toList := by
-      rw [a3, if_neg hne, hws, if_neg (by rw [IDX_NOT]; omega)]; exact hw0 _
+      rw [a3, ite_eq_right hne, hws, ite_eq_right (by rw [IDX_NOT]; omega)]; exact hw0 _
     obtain ⟨b1, b2, b3⟩ := flushLit_spec s1 (NOT lit) start w2
     generalize s1.flushWatchedClausesByLiteral (NOT lit) start = s2 at b1 b2 b3 ih
     have hasg1 : s1.asg = s0.asg := by have := congrArg Solver.asg (a1.trans hs); exact this
@@ -323,29 +323,29 @@ theorem flushAllLoop_spec (s0 : Solver) (start : Ref) (n : Nat) (hn : n < 2 ^ 30
     rw [b3]
     by_cases e2 : l = NOT lit
     · subst e2
-      rw [if_pos rfl, if_pos (by rw [IDX_NOT]; omega)]
+      rw [ite_eq_left rfl, ite_eq_left (by rw [IDX_NOT]; omega)]
       apply flushedWords_congr hasg1
-      have := a3 (NOT lit); rw [if_neg hne] at this
-      rw [this, hws, if_neg (by rw [IDX_NOT]; omega)]
-    · rw [if_neg e2, a3]
+      have := a3 (NOT lit); rw [ite_eq_right hne] at this
+      rw [this, hws, ite_eq_right (by rw [IDX_NOT]; omega)]
+    · rw [ite_eq_right e2, a3]
       by_cases e1 : l = lit
       · subst e1
-        rw [if_pos rfl, if_pos (by omega)]
+        rw [ite_eq_left rfl, ite_eq_left (by omega)]
         apply flushedWords_congr hasg
-        have := hws lit; rw [if_neg (by omega)] at this
+        have := hws lit; rw [ite_eq_right (by omega)] at this
         exact this
-      · rw [if_neg e1, hws]
+      · rw [ite_eq_right e1, hws]
         have hl : (IDX l).toNat ≠ i := by
           intro h
           rcases (IDX_eq_iff l lit).mp (UInt32.toNat_inj.mp (h.trans hidx.symm)) with h' | h'
           · exact e1 h'
           · exact e2 h'
         by_cases hli : (IDX l).toNat < i
-        · rw [if_pos hli, if_pos (by omega)]
-        · rw [if_neg hli, if_neg (by omega)]
+        · rw [ite_eq_left hli, ite_eq_left (by omega)]
+        · rw [ite_eq_right hli, ite_eq_right (by omega)]
   | case2 s i hi =>
     intro hs hsz hws
-    rw [flushAllLoop, if_neg hi]
+    rw [flushAllLoop, ite_eq_right hi]
     refine ⟨hs, hsz, fun l => ?_⟩
     rw [hws l, show max i n = i by omega]
 

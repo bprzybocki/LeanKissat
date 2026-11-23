@@ -240,7 +240,7 @@ theorem allocWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {b
       | bin b' => exact ih (fun b'' x hm => hL b'' x (List.mem_cons_of_mem _ hm))
       | large b' x =>
         simp only [countRef]
-        rw [if_neg (hL b' x (List.mem_cons_self ..)), ih (fun b'' x hm => hL b'' x (List.mem_cons_of_mem _ hm))]
+        rw [ite_eq_right (hL b' x (List.mem_cons_self ..)), ih (fun b'' x hm => hL b'' x (List.mem_cons_of_mem _ hm))]
   have hnewlits := hA.litsL_new hn32
   have hsize_new : (b.size r).toNat = lits.size := by rw [hA.size, UInt32.toNat_ofNat_of_lt' hn32]
   have hgar_new := hA.newFlags.2

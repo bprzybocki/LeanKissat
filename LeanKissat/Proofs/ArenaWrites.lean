@@ -60,10 +60,10 @@ theorem setLit_writeOK {a : Arena} (h : a.Layout) {x0 : Ref} (hx0 : x0 ∈ a.cha
       intro i hi
       rw [hlit]
       have hi' : i < (a.size x).toNat := by simpa using hi
-      rw [if_neg (by intro e; exact lit_pos_ne_lit h hx0 hx (fun e' => hne e'.symm) hk hi' e.1)]
+      rw [ite_eq_right (by intro e; exact lit_pos_ne_lit h hx0 hx (fun e' => hne e'.symm) hk hi' e.1)]
     · have := lit_pos_ne_header h hx0 hx hk
       simp only [setLit, searched, U32Vec.get!_set!]
-      rw [if_neg (by intro e; exact this.2.1 e.1)]
+      rw [ite_eq_right (by intro e; exact this.2.1 e.1)]
   · unfold litsL
     rw [hsize x0 hx0]
     apply List.ext_getElem (by simp)
@@ -82,7 +82,7 @@ theorem setLit_writeOK {a : Arena} (h : a.Layout) {x0 : Ref} (hx0 : x0 ∈ a.cha
       simp [this, e]
   · have := lit_pos_ne_header h hx0 hx0 hk
     simp only [setLit, searched, U32Vec.get!_set!]
-    rw [if_neg (by intro e; exact this.2.1 e.1)]
+    rw [ite_eq_right (by intro e; exact this.2.1 e.1)]
 
 theorem setSearched_writeOK {a : Arena} (h : a.Layout) {x0 : Ref}
     (hx0 : x0 ∈ a.chain 0 a.sizeWards) (v : UInt32) :
@@ -112,7 +112,7 @@ theorem setSearched_writeOK {a : Arena} (h : a.Layout) {x0 : Ref}
       (a.setSearched x0 v).lit x i = a.lit x i := by
     intro x hx i hi
     simp only [setSearched, lit, U32Vec.get!_set!]
-    rw [if_neg]
+    rw [ite_eq_right]
     intro ⟨e, _⟩
     by_cases ex : x = x0
     · subst ex; unfold litPos at e; omega
@@ -124,7 +124,7 @@ theorem setSearched_writeOK {a : Arena} (h : a.Layout) {x0 : Ref}
     · unfold litsL; rw [hsize x hx]
       apply List.map_congr_left; intro i hi; exact hlitne x hx i (by simpa using hi)
     · simp only [setSearched, searched, U32Vec.get!_set!]
-      rw [if_neg]
+      rw [ite_eq_right]
       intro ⟨e, _⟩
       have := hpos x hx hne
       have := wardsOfClause_pos (a.size x).toNat
@@ -132,7 +132,7 @@ theorem setSearched_writeOK {a : Arena} (h : a.Layout) {x0 : Ref}
   · unfold litsL; rw [hsize x0 hx0]
     apply List.map_congr_left; intro i hi; exact hlitne x0 hx0 i (by simpa using hi)
   · simp only [setSearched, searched, U32Vec.get!_set!, true_and]
-    rw [if_pos (by unfold base; omega)]
+    rw [ite_eq_left (by unfold base; omega)]
 
 end Arena
 end LeanKissat
@@ -161,7 +161,7 @@ theorem perm_replace {L : List Lit} {r : Nat} (hr2 : 2 ≤ r) (hrs : r < L.lengt
     have hM := List.set_set_perm (as := (L.set 0 other).set 1 notLit) (i := 1) (j := r)
       (by simp; omega) (by simp; omega)
     have hMr : ((L.set 0 other).set 1 notLit)[r]'(by simp; omega) = L[r] := by
-      simp only [List.getElem_set]; rw [if_neg (by omega), if_neg (by omega)]
+      simp only [List.getElem_set]; rw [ite_eq_right (by omega), ite_eq_right (by omega)]
     have hM1 : ((L.set 0 other).set 1 notLit)[1]'(by simp; omega) = notLit := by simp
     rw [hMr, hM1, List.set_set] at hM
     exact hM.trans m

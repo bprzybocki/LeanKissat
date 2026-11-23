@@ -33,10 +33,10 @@ theorem seg_swap (v : U32Vec) (off n i j : Nat) (hi : i < n) (hj : j < n) (hs : 
       · by_cases eki : i = k
         · subst eki
           have : off + j ≠ off + i := by omega
-          simp [this, ekj, show off + i < v.size by omega]
+          simp [ekj, show off + i < v.size by omega]
         · have h1 : off + j ≠ off + k := by omega
           have h2 : off + i ≠ off + k := by omega
-          simp [h1, h2, ekj, eki]
+          simp [ekj, eki]
   rw [e]; exact List.set_set_perm hi' hj'
 
 theorem vNeg_vPos : ∀ (v : UInt8), v ≠ 0 → vNeg v = false → vPos v = true := by decide
@@ -61,7 +61,7 @@ theorem moveSmallestLoop_spec (values : ByteArray) (level : UInt32 → UInt32) (
   induction pos, best, u, k, i using moveSmallestLoop.induct values level sat lits off size with
   | case1 pos best u k i hi b v hv =>
     intro h1 h2 h3 h4 h5 h6
-    rw [moveSmallestLoop, if_pos hi]; dsimp only; rw [if_pos hv]
+    rw [moveSmallestLoop, ite_eq_left hi]; dsimp only; rw [ite_eq_left hv]
     refine ⟨fun e => by omega, fun _ => ⟨by omega, hi, by first | rfl | trivial⟩, by first | rfl | trivial,
       fun hs hn => ?_⟩
     exfalso
@@ -69,9 +69,9 @@ theorem moveSmallestLoop_spec (values : ByteArray) (level : UInt32 → UInt32) (
     simp only [v] at hv; rw [hv] at hn; simp [vNeg] at hn
   | case2 pos best u k i hi b v hv l better hb ih =>
     intro h1 h2 h3 h4 h5 h6
-    rw [moveSmallestLoop, if_pos hi]; dsimp only; rw [if_neg hv]
+    rw [moveSmallestLoop, ite_eq_left hi]; dsimp only; rw [ite_eq_right hv]
     simp only [l, better, b, v, dite_eq_ite] at hb ih ⊢
-    rw [if_pos hb]
+    rw [ite_eq_left hb]
     have hv0 : values.get! (lits.get! (off + i)).toNat ≠ 0 := by
       intro e; apply hv; simp [v, b, e]
     apply ih (by omega) (fun e => by omega) (fun _ => ⟨by omega, hi, by first | rfl | trivial⟩)
@@ -87,13 +87,13 @@ theorem moveSmallestLoop_spec (values : ByteArray) (level : UInt32 → UInt32) (
         have hpu : vPos u = true := vNeg_vPos u h5 (by simpa using hu)
         have hnv : vNeg (values.get! (lits.get! (off + i)).toNat) = true := hn
         have : (vPos u && vNeg (values.get! (lits.get! (off + i)).toNat)) = true := by simp [hpu, hnv]
-        rw [if_neg (by simp [hu]), if_pos this] at hb
+        rw [ite_eq_right (by simp [hu]), ite_eq_left this] at hb
         exact absurd hb (by simp)
   | case3 pos best u k i hi b v hv l better hb ih =>
     intro h1 h2 h3 h4 h5 h6
-    rw [moveSmallestLoop, if_pos hi]; dsimp only; rw [if_neg hv]
+    rw [moveSmallestLoop, ite_eq_left hi]; dsimp only; rw [ite_eq_right hv]
     simp only [l, better, b, v, dite_eq_ite] at hb ih ⊢
-    rw [if_neg hb]
+    rw [ite_eq_right hb]
     apply ih (by omega) h2 h3 h4 h5
     intro hs hn k' hk1 hk2
     by_cases e : k' = i
@@ -104,12 +104,12 @@ theorem moveSmallestLoop_spec (values : ByteArray) (level : UInt32 → UInt32) (
       · exact hneg
       · exfalso
         have hpv : vPos (values.get! (lits.get! (off + k')).toNat) = true := vNeg_vPos _ hv0 (by simpa using hneg)
-        rw [if_pos (by simp [hn, hpv])] at hb
+        rw [ite_eq_left (by simp [hn, hpv])] at hb
         exact hb rfl
     · exact h6 hs hn k' hk1 (by omega)
   | case4 pos best u k i hi =>
     intro h1 h2 h3 h4 h5 h6
-    rw [moveSmallestLoop, if_neg hi]
+    rw [moveSmallestLoop, ite_eq_right hi]
     exact ⟨h2, h3, h4, fun hs hn k' hk1 hk2 => h6 hs hn k' hk1 (by omega)⟩
 
 theorem moveSmallest_spec (values : ByteArray) (level : UInt32 → UInt32) (sat : Bool) (lits : U32Vec)
@@ -125,11 +125,11 @@ theorem moveSmallest_spec (values : ByteArray) (level : UInt32 → UInt32) (sat 
   dsimp only
   by_cases h0 : ((values.get! (lits.get! (off + start)).toNat == 0) ||
       (vPos (values.get! (lits.get! (off + start)).toNat) && sat)) = true
-  · rw [if_pos h0]
+  · rw [ite_eq_left h0]
     refine ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, List.Perm.refl _, fun hs _ => ?_⟩
     simp only [hs, Bool.and_false, Bool.or_false, beq_iff_eq] at h0
     rw [h0]; rfl
-  · rw [if_neg h0]
+  · rw [ite_eq_right h0]
     have hu0 : values.get! (lits.get! (off + start)).toNat ≠ 0 := by
       intro e; apply h0; simp [e]
     have L := moveSmallestLoop_spec values level sat lits off size start 0 (lits.get! (off + start))
@@ -145,12 +145,12 @@ theorem moveSmallest_spec (values : ByteArray) (level : UInt32 → UInt32) (sat 
     obtain ⟨l1, l2, l3, l4⟩ := L
     dsimp only at l1 l2 l3 l4 ⊢
     by_cases hp : pos = 0
-    · rw [if_pos (by simp [hp])]
+    · rw [ite_eq_left (by simp [hp])]
       refine ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, List.Perm.refl _, fun hs ⟨k, hk1, hk2, hk3⟩ => ?_⟩
       apply Classical.byContradiction; intro hn
       have hneg : vNeg u = true := by rw [l3, l1 hp]; simpa using hn
       rw [l4 hs hneg k hk1 hk2] at hk3; exact absurd hk3 (by simp)
-    · rw [if_neg (by simp [hp])]
+    · rw [ite_eq_right (by simp [hp])]
       obtain ⟨p1, p2, p3⟩ := l2 hp
       rw [p3]
       have hne : off + start ≠ off + pos := by omega

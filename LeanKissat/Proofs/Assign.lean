@@ -188,7 +188,7 @@ theorem assign_isTrue (hs : s.Sizes) (hl : s.ValidLit lit) (l : Lit) :
   unfold IsTrue
   rw [assign_value hs hl]
   by_cases h1 : l = NOT lit
-  · subst h1; simp [toNat_eq_iff, VAL_FALSE, VAL_TRUE, NOT_ne]
+  · subst h1; simp [VAL_FALSE, VAL_TRUE, NOT_ne]
   · by_cases h2 : l = lit
     · subst h2; simp [toNat_eq_iff, h1]
     · simp [toNat_eq_iff, h1, h2]
@@ -198,7 +198,7 @@ theorem assign_isFalse (hs : s.Sizes) (hl : s.ValidLit lit) (l : Lit) :
   unfold IsFalse
   rw [assign_value hs hl]
   by_cases h1 : l = NOT lit
-  · subst h1; simp [toNat_eq_iff]
+  · subst h1; simp
   · by_cases h2 : l = lit
     · subst h2; simp [toNat_eq_iff, h1, VAL_FALSE, VAL_TRUE]
     · simp [toNat_eq_iff, h1, h2]

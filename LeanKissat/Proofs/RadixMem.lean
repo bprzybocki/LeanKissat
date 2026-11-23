@@ -74,16 +74,16 @@ theorem scatterLoop_allP {P : α → Prop} (rank : α → UInt64) (src : Array �
     AllP P (scatterLoop rank src soff dst doff n i k count).1 := by
   induction dst, k, count using scatterLoop.induct rank src soff doff n i with
   | case1 dst k count hk x m p count' ih =>
-    rw [scatterLoop, if_pos hk]
+    rw [scatterLoop, ite_eq_left hk]
     exact ih (hd.set! (hs _) _)
   | case2 dst k count hk =>
-    rw [scatterLoop, if_neg hk]; exact hd
+    rw [scatterLoop, ite_eq_right hk]; exact hd
 
 theorem copyLoop_allP {P : α → Prop} (src : Array α) (soff : Nat) (dst : Array α) (doff n k : Nat)
     (hs : AllP P src) (hd : AllP P dst) : AllP P (copyLoop src soff dst doff n k) := by
   induction dst, k using copyLoop.induct src soff doff n with
-  | case1 dst k hk ih => rw [copyLoop, if_pos hk]; exact ih (hd.set! (hs _) _)
-  | case2 dst k hk => rw [copyLoop, if_neg hk]; exact hd
+  | case1 dst k hk ih => rw [copyLoop, ite_eq_left hk]; exact ih (hd.set! (hs _) _)
+  | case2 dst k hk => rw [copyLoop, ite_eq_right hk]; exact hd
 
 theorem idbind {σ β : Type} (x : Id σ) (f : σ → Id β) : (x >>= f) = f x := rfl
 theorem idpure {σ : Type} (x : σ) : (pure x : Id σ) = x := rfl
@@ -110,7 +110,7 @@ theorem radixSortCore_allP {P : α → Prop} (hd : P default) (bits : Nat) (rank
         | exact AllP.extract hst.1 _ _
         | (apply scatterLoop_allP <;> first | exact hst.1 | exact hst.2 | exact AllP.extract hst.1 _ _)
     · intro y hy
-      simp only [idbind, idpure]
+      simp only [idpure]
       split
       · exact copyLoop_allP _ _ _ _ _ _ hy.2 hy.1
       · exact hy.1

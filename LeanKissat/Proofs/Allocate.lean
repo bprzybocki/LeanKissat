@@ -45,8 +45,8 @@ theorem allocate_some {a : Arena} {red : Bool} {glue : UInt32} {lits : U32Vec} {
     obtain ⟨rfl, rfl⟩ := h
     refine ⟨?_, rfl, by omega⟩
     simp only [U32Vec.view_pushN, U32Vec.view_appendFrom lits lits.size (Nat.le_refl _) _ 0 (Nat.zero_le _),
-      U32Vec.view_push, List.drop_zero, Nat.sub_zero, List.take_length, allocWords, List.append_assoc,
-      List.cons_append, List.nil_append, List.singleton_append]
+      U32Vec.view_push, List.drop_zero, Nat.sub_zero, allocWords, List.append_assoc,
+      List.cons_append, List.nil_append]
     rw [List.take_of_length_le (by simp)]
 
 end Arena
@@ -135,14 +135,14 @@ theorem LayoutFrom.chain_eq {a : Arena} :
     simp [LayoutFrom] at h
     cases fuel with
     | zero => rfl
-    | succ f => unfold chain; rw [if_neg (by omega)]
+    | succ f => unfold chain; rw [ite_eq_right (by omega)]
   | cons r' rs ih =>
     intro h fuel hf
     obtain ⟨rfl, hlt, _, _, hrest⟩ := h
     cases fuel with
     | zero => simp at hf
     | succ f =>
-      unfold chain; rw [if_pos hlt, ih hrest f (by simp at hf; omega)]
+      unfold chain; rw [ite_eq_left hlt, ih hrest f (by simp at hf; omega)]
 
 theorem alloc_flags (red : Bool) (glue : UInt32) :
     (((if red then min MAX_GLUE glue else 0) ||| (if red then ClauseHeader.redundantBit else 0)) &&&

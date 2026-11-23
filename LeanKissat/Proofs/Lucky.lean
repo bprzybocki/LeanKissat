@@ -155,8 +155,8 @@ theorem luckyFailedRoot_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : Se
     obtain ⟨r, w⟩ := A
     dsimp only at a1 ⊢
     by_cases hr : r = 20
-    · rw [if_pos (by simp [hr])]; exact LStepOut.twenty (a1 hr)
-    · rw [if_neg (by simpa using hr)]; exact LStepOut.zeroF (notPorted_flagged _)
+    · rw [ite_eq_left (by simp [hr])]; exact LStepOut.twenty (a1 hr)
+    · rw [ite_eq_right (by simpa using hr)]; exact LStepOut.zeroF (notPorted_flagged _)
 
 theorem luckyFailed_spec {Φ : (Nat → Bool) → Prop} {s : Solver} {c : CRef} (hA : AStepPre Φ s c)
     (hinc : s.inconsistent = true → ¬ ∃ β, Φ β) (hopt : PlainOpts s.options) (himp : ImportOK s) :
@@ -167,18 +167,18 @@ theorem luckyFailed_spec {Φ : (Nat → Bool) → Prop} {s : Solver} {c : CRef} 
   obtain ⟨r, w⟩ := A
   dsimp only at a1 a2 a3 ⊢
   by_cases hr : r = 20
-  · rw [if_pos (by simp [hr])]; exact LStepOut.twenty (a1 hr)
-  rw [if_neg (by simpa using hr)]
+  · rw [ite_eq_left (by simp [hr])]; exact LStepOut.twenty (a1 hr)
+  rw [ite_eq_right (by simpa using hr)]
   have h0 : r = 0 := by rcases a2 with e | e; exact e; exact absurd e hr
   by_cases hf : (w.overflowed || w.outOfResources || w.notPorted) = true
-  · rw [if_pos hf]
+  · rw [ite_eq_left hf]
     refine LStepOut.zeroF ?_
     simp only [Bool.or_eq_true] at hf
     rcases hf with (e | e) | e
     · exact Or.inl e
     · exact Or.inr (Or.inl e)
     · exact Or.inr (Or.inr e)
-  rw [if_neg hf]
+  rw [ite_eq_right hf]
   rcases a3 h0 with hfl | ⟨w1, w2⟩
   · exfalso; apply hf; rcases hfl with e | e | e <;> simp [e]
   · have := luckyFailedRoot_spec w1
@@ -374,7 +374,7 @@ theorem LSatOut.chain {Φ : (Nat → Bool) → Prop} {s : Solver} {r1 : UInt32} 
     rw [this]; exact h
 
 theorem luckySatisfiable_flagged (t : Solver) (h : Flagged t) (fw fp : Bool) : t.luckySatisfiable fw fp = (0, t) := by
-  unfold luckySatisfiable; rw [luckySatLoop, if_pos (by rcases h with e | e | e <;> simp [e])]
+  unfold luckySatisfiable; rw [luckySatLoop, ite_eq_left (by rcases h with e | e | e <;> simp [e])]
 
 theorem lsat_step {Φ : (Nat → Bool) → Prop} (fw fp : Bool) (f : Solver → UInt32 × Solver)
     (hf : ∀ t, SearchInv Φ t → LSatOut Φ t (f t)) (hff : ∀ t, Flagged t → f t = (0, t)) :
@@ -411,14 +411,14 @@ theorem Flagged.setProbing {t : Solver} (h : Flagged t) (b : Bool) : Flagged { t
 theorem lucky_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : SearchInv Φ s) : LuckyOut Φ s s.lucky := by
   unfold lucky
   by_cases hi : s.inconsistent = true
-  · rw [if_pos hi]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
-  rw [if_neg hi]
+  · rw [ite_eq_left hi]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
+  rw [ite_eq_right hi]
   by_cases hf : (s.overflowed || s.outOfResources || s.notPorted) = true
-  · rw [if_pos hf]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
-  rw [if_neg hf]
+  · rw [ite_eq_left hf]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
+  rw [ite_eq_right hf]
   by_cases hl : (s.options.lucky == 0) = true
-  · rw [if_pos hl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
-  rw [if_neg hl]
+  · rw [ite_eq_left hl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨h, IrrMono.refl _⟩⟩
+  rw [ite_eq_right hl]
   have h0 := h.setProbing true
   have m0 : IrrMono s { s with probing := true } := IrrMono.of_eq rfl rfl rfl
   obtain ⟨a1, a2⟩ := luckyAssignPhase_spec h0
@@ -427,9 +427,9 @@ theorem lucky_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : SearchInv Φ
   obtain ⟨res, u⟩ := R
   dsimp only at a1 a2 ⊢
   by_cases hnp : u.notPorted = true
-  · rw [if_pos hnp]
+  · rw [ite_eq_left hnp]
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inl (Or.inr (Or.inr hnp))⟩
-  rw [if_neg hnp]
+  rw [ite_eq_right hnp]
   have hu : SearchInv Φ u ∧ IrrMono s u := by
     rcases a1 with e | ⟨u1, u2⟩
     · exact absurd e hnp
@@ -446,9 +446,9 @@ theorem lucky_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : SearchInv Φ
   obtain ⟨l1, l2, l3, l4⟩ := hL
   dsimp only at l1 l2 l3 l4 ⊢
   by_cases hc : (r == 10 && !v.luckyComplete) = true
-  · rw [if_pos hc]
+  · rw [ite_eq_left hc]
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inl (Or.inr (Or.inr rfl))⟩
-  rw [if_neg hc]
+  rw [ite_eq_right hc]
   refine ⟨fun e => ?_, fun e => l2 e, fun e => ?_⟩
   · obtain ⟨v1, v2⟩ := l1 e
     have hcomp : v.luckyComplete = true := by

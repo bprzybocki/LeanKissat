@@ -307,7 +307,7 @@ theorem LoopRel.large_common {W0 : List UInt32} {ws : WVec} {p q : Nat} {out : L
     rw [List.getElem?_eq_getElem hl', List.getElem?_eq_getElem hl] at e
     have := Option.some.inj e
     simp only [Array.getElem_toList] at this
-    simp only [WVec.get!, Array.getElem!_eq_getD, Array.getD, dif_pos (by simpa using hl')]
+    simp only [WVec.get!, Array.getElem!_eq_getD, Array.getD, dite_eq_left (by simpa using hl')]
     exact this
   refine ⟨hl, hget, ht, hok, ?_, ?_, ?_⟩
   · rw [parse_drop_large hl hb0, hget, hge]
@@ -426,7 +426,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     rw [hrel.parse_bin hp hb, PS.run_cons_none _ hres']
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩ (.bin (watchLit ws[p])) =
         ⟨out ++ [.bin (watchLit ws[p])], a, arena, dlist, s, res⟩ := by
-      simp only [PS.step]; rw [if_pos hv]
+      simp only [PS.step]; rw [ite_eq_left hv]
     rw [hstep]
     exact ih _ _ (hrel.bin hp hb) hdl
   case case3 ws p q a arena dl s ticks res hp hres head blocking bv hb ws' hv hf s' ih =>
@@ -435,7 +435,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     rw [hrel.parse_bin hp hb, PS.run_cons_none _ hres']
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩ (.bin (watchLit ws[p])) =
         ⟨out ++ [.bin (watchLit ws[p])], a, arena, dlist, s', some .binConflict⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_pos hf]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_left hf]
     rw [hstep]
     exact ih _ _ (hrel.bin hp hb) hdl
   case case4 ws p q a arena dl s ticks res hp hres head blocking bv hb ws' hv hf oidx reason s' a' ih =>
@@ -444,7 +444,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     rw [hrel.parse_bin hp hb, PS.run_cons_none _ hres']
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩ (.bin (watchLit ws[p])) =
         ⟨out ++ [.bin (watchLit ws[p])], a', arena, dlist, s', res⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_neg hf]; rfl
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_right hf]; rfl
     rw [hstep]
     exact ih _ _ (hrel.bin hp hb) hdl
   case case5 ws p q a arena dl s ticks res hp hres head blocking bv hb tail ws' q' hv ih =>
@@ -456,7 +456,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out ++ [.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))], a, arena, dlist, s, res⟩ := by
-      simp only [PS.step]; rw [if_pos hv]
+      simp only [PS.step]; rw [ite_eq_left hv]
     rw [hstep]
     exact ih _ _ (hrel.large_same hp hb') hdl
   case case6 ws p q a arena dl s ticks res hp hres head blocking bv hb tail ws' q' hv ref ticks' hg ih =>
@@ -468,7 +468,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out, a, arena, dlist, s, res⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_pos hg]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_left hg]
     rw [hstep]
     have : q' - 2 = q := by simp [q']
     rw [this] at ih
@@ -483,7 +483,7 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out ++ [.large other (watchRef (ws.get! (p + 1)))], a, arena, dlist, s, res⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_neg hg, if_pos hov]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_right hg, ite_eq_left hov]
     rw [hstep]
     have : q' - 2 = q := by simp [q']
     simp only [ws'', this] at ih
@@ -498,9 +498,9 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out, a, arena', dlist ++ [(replacement, other, ref)], s, res⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_neg hg, if_neg hov]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_right hg, ite_eq_right hov]
       have hr' := hr; simp only [r, r0, size, searched, ref, tail, dite_eq_ite] at hr'
-      rw [if_pos hr']; rfl
+      rw [ite_eq_left hr']; rfl
     rw [hstep]
     have : q' - 2 = q := by simp [q']
     rw [this] at ih
@@ -521,9 +521,9 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out ++ [.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))], a, arena, dlist, s,
           some (.large ref)⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_neg hg, if_neg hov]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_right hg, ite_eq_right hov]
       have hr' := hr; simp only [r, r0, size, searched, ref, tail, dite_eq_ite] at hr'
-      rw [if_neg hr', if_pos hov0]
+      rw [ite_eq_right hr', ite_eq_left hov0]
     rw [hstep]
     exact ih _ _ (hrel.large_same hp hb') hdl
   case case11 ws p q a arena dl s ticks res hp hres head blocking bv hb tail ws' q' hv ref ticks' hg
@@ -536,9 +536,9 @@ theorem propLoop_spec (probing jump : Bool) (level : UInt32) (notLit : Lit) (W0 
     have hstep : PS.step probing jump level notLit ⟨out, a, arena, dlist, s, res⟩
         (.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))) =
         ⟨out ++ [.large (watchLit ws[p]) (watchRef (ws.get! (p + 1)))], a', arena, dlist, s', res⟩ := by
-      simp only [PS.step]; rw [if_neg hv, if_neg hg, if_neg hov]
+      simp only [PS.step]; rw [ite_eq_right hv, ite_eq_right hg, ite_eq_right hov]
       have hr' := hr; simp only [r, r0, size, searched, ref, tail, dite_eq_ite] at hr'
-      rw [if_neg hr', if_neg hov0]; rfl
+      rw [ite_eq_right hr', ite_eq_right hov0]; rfl
     rw [hstep]
     exact ih _ _ (hrel.large_same hp hb') hdl
 

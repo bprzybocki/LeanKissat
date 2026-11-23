@@ -202,34 +202,34 @@ theorem searchStepNone_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hre
         else (none, s.decide)) := by
   unfold StepOut
   by_cases hi : t.iterating = true
-  · rw [if_pos hi]
+  · rw [ite_eq_left hi]
     have : SFr { t with iterating := false } t := by sf_rfl
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨this.searchInv h, this.irrMono⟩⟩
-  rw [if_neg hi]
+  rw [ite_eq_right hi]
   by_cases hu : (t.asg.unassigned == 0) = true
-  · rw [if_pos hu]
+  · rw [ite_eq_left hu]
     exact ⟨fun e => by simp at e, fun _ => ⟨h.inv, h.invS, hp, by simpa using hu, IrrMono.refl _, h.imp⟩,
       fun e => by simp at e⟩
-  rw [if_neg hu]
+  rw [ite_eq_right hu]
   by_cases htf : t.terminationFlagged = true
-  · rw [if_pos htf]
+  · rw [ite_eq_left htf]
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun e => by simp at e⟩
-  rw [if_neg htf]
+  rw [ite_eq_right htf]
   by_cases hrd : t.reducing = true
-  · rw [if_pos hrd]
+  · rw [ite_eq_left hrd]
     obtain ⟨r1, r2, r3⟩ := hred t h hp hrd
     generalize P.reduce t = R at r1 r2 r3 ⊢
     obtain ⟨res, u⟩ := R
     dsimp only at r1 r2 r3 ⊢
     by_cases hz : res = 0
-    · rw [if_neg (by simp [hz])]
+    · rw [ite_eq_right (by simp [hz])]
       exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => r3 hz⟩
-    · rw [if_pos (by simpa using hz)]
+    · rw [ite_eq_left (by simpa using hz)]
       refine ⟨fun e => r1 (by simpa using e), fun e => ?_, fun e => by simp at e⟩
       have : res = 10 := by simpa using e
       rcases r2 with r | r <;> rw [r] at this <;> simp at this
-  rw [if_neg hrd]
-  rw [if_neg (by rw [switchingSearchMode_false t h.opts.stable]; simp)]
+  rw [ite_eq_right hrd]
+  rw [ite_eq_right (by rw [switchingSearchMode_false t h.opts.stable]; simp)]
   obtain ⟨q1, q2⟩ := restarting_spec t
   generalize t.restarting = R at q1 q2 ⊢
   obtain ⟨r, u⟩ := R
@@ -238,30 +238,30 @@ theorem searchStepNone_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hre
   have hpu : u.propagate = u.trailL.length := by
     rw [q1.same.propagate, hp]; simp [trailL, q1.same.asg]
   by_cases hr : r = true
-  · rw [if_pos hr]
+  · rw [ite_eq_left hr]
     have hl : u.level ≠ 0 := by rw [q1.same.level]; exact q2 hr
     obtain ⟨g1, g2⟩ := restart_spec hu hl
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inr ⟨g1, q1.irrMono.trans g2⟩⟩
-  rw [if_neg hr, if_neg (by rw [reordering_false u hu.opts.reorder]; simp),
-    if_neg (by rw [rephasing_false u hu.opts.rephase]; simp)]
+  rw [ite_eq_right hr, ite_eq_right (by rw [reordering_false u hu.opts.reorder]; simp),
+    ite_eq_right (by rw [rephasing_false u hu.opts.rephase]; simp)]
   by_cases hpb : u.probingP = true
-  · rw [if_pos hpb]
+  · rw [ite_eq_left hpb]
     obtain ⟨p1, p2⟩ := hprobe u
-    rw [if_neg (by simp [p1])]
+    rw [ite_eq_right (by simp [p1])]
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inl p2⟩
-  rw [if_neg hpb]
+  rw [ite_eq_right hpb]
   by_cases hel : u.eliminating = true
-  · rw [if_pos hel]
+  · rw [ite_eq_left hel]
     obtain ⟨p1, p2⟩ := helim u
-    rw [if_neg (by simp [p1])]
+    rw [ite_eq_right (by simp [p1])]
     exact ⟨fun e => by simp at e, fun e => by simp at e, fun _ => Or.inl p2⟩
-  rw [if_neg hel]
+  rw [ite_eq_right hel]
   by_cases hcl : u.conflictLimitHit = true
-  · rw [if_pos hcl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun e => by simp at e⟩
-  rw [if_neg hcl]
+  · rw [ite_eq_left hcl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun e => by simp at e⟩
+  rw [ite_eq_right hcl]
   by_cases hdl : u.decisionLimitHit = true
-  · rw [if_pos hdl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun e => by simp at e⟩
-  rw [if_neg hdl]
+  · rw [ite_eq_left hdl]; exact ⟨fun e => by simp at e, fun e => by simp at e, fun e => by simp at e⟩
+  rw [ite_eq_right hdl]
   · refine ⟨fun e => by simp at e, fun e => by simp at e, fun _ => ?_⟩
     rcases decide_spec hu hpu with d | ⟨d1, d2⟩
     · exact Or.inl (Or.inr (Or.inr d))
@@ -297,12 +297,12 @@ theorem searchStep_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred : 
       else (none, (t.analyze c).snd))
     unfold StepOut
     by_cases hz : (t.analyze c).1 = 0
-    · rw [if_neg (by simp [hz])]
+    · rw [ite_eq_right (by simp [hz])]
       refine ⟨fun e => by simp at e, fun e => by simp at e, fun _ => ?_⟩
       rcases a3 hz with h' | ⟨h1, h2⟩
       · exact Or.inl h'
       · exact Or.inr ⟨h1, m.trans h2⟩
-    · rw [if_pos (by simpa using hz)]
+    · rw [ite_eq_left (by simpa using hz)]
       refine ⟨fun e => a1 (by simpa using e), fun e => ?_, fun e => by simp at e⟩
       have : (t.analyze c).1 = 10 := by simpa using e
       rcases a2 with r | r <;> rw [r] at this <;> simp at this
@@ -313,7 +313,7 @@ theorem searchStep_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred : 
 theorem searchLoop_flagged (P : Procedures) {s : Solver} (h : Flagged s) (b st : Nat) :
     searchLoop P s b st = (0, s) := by
   rw [searchLoop]
-  rw [if_pos (by rcases h with h | h | h <;> simp [h])]
+  rw [ite_eq_left (by rcases h with h | h | h <;> simp [h])]
 
 /-- The search loop: 20 refutes `Φ`, 10 ends in a satisfying state. -/
 theorem searchLoop_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred : ReduceOK Φ P.reduce)
@@ -361,10 +361,10 @@ theorem propagateTrailLoop_none (b : Nat) : ∀ (s : Solver) (i : Nat),
   intro s i
   fun_induction searchPropagateLoop b s i with
   | case1 s i hi lit s' res hpl hres =>
-    rw [propagateTrailLoop, dif_pos hi]; simp only [lit, hpl, hres]; rfl
+    rw [propagateTrailLoop, dite_eq_left hi]; simp only [lit, hpl, hres]; rfl
   | case2 s i hi lit s' res hpl hres ih =>
-    rw [propagateTrailLoop, dif_pos hi]; simp only [lit, hpl]; rw [if_neg hres]; exact ih
-  | case3 s i hi => rw [propagateTrailLoop, dif_neg hi]
+    rw [propagateTrailLoop, dite_eq_left hi]; simp only [lit, hpl]; rw [ite_eq_right hres]; exact ih
+  | case3 s i hi => rw [propagateTrailLoop, dite_eq_right hi]
 
 theorem SFr.symm {s t : Solver} (h : SFr t s) : SFr s t :=
   ⟨⟨h.same.asg.symm, h.same.arena.symm, h.same.watches.symm, h.same.delayed.symm, h.same.vars.symm,
@@ -386,9 +386,9 @@ theorem uct_sfr {x y : Solver} (h : SFr x y) (c : Option CRef) (f cc cc' : Bool)
   | none =>
     dsimp only
     by_cases hc : (f && x.level == 0 && x.asg.unflushed != 0) = true
-    · rw [if_pos hc, if_pos (by rw [← hl, ← ha]; exact hc)]
+    · rw [ite_eq_left hc, ite_eq_left (by rw [← hl, ← ha]; exact hc)]
       exact flushTrail_sfr h
-    · rw [if_neg hc, if_neg (by rw [← hl, ← ha]; exact hc)]; exact h
+    · rw [ite_eq_right hc, ite_eq_right (by rw [← hl, ← ha]; exact hc)]; exact h
   | some c =>
     dsimp only
     have h1 : SFr (if cc then INC! x conflicts else x) (if cc' then INC! y conflicts else y) := by
@@ -399,11 +399,11 @@ theorem uct_sfr {x y : Solver} (h : SFr x y) (c : Option CRef) (f cc cc' : Bool)
     generalize (if cc' then INC! y conflicts else y) = y' at h1
     have hl' := h1.same.level
     by_cases hz : (x'.level == 0) = true
-    · rw [if_pos hz, if_pos (by rw [← hl']; exact hz)]
+    · rw [ite_eq_left hz, ite_eq_left (by rw [← hl']; exact hz)]
       refine ⟨⟨h1.same.asg, h1.same.arena, h1.same.watches, h1.same.delayed, h1.same.vars, h1.same.level,
         h1.same.frameTrail, h1.same.propagate, h1.same.options⟩, h1.clause, ?_, h1.bits⟩
       have := h1.flg; simp only [Flg, Prod.mk.injEq] at this ⊢; exact ⟨this.1, trivial, this.2.2⟩
-    · rw [if_neg hz, if_neg (by rw [← hl']; exact hz)]; exact h1
+    · rw [ite_eq_right hz, ite_eq_right (by rw [← hl']; exact hz)]; exact h1
 
 theorem uct_c01 (x : Solver) (c : Option CRef) (f cc : Bool) :
     (x.updateConflictsAndTrail c f cc).conflictLit0 = x.conflictLit0 ∧

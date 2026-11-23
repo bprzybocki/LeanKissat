@@ -165,7 +165,7 @@ theorem lucky_flagged (u : Solver) (h : Flagged u) : u.lucky = (0, u) := by
   unfold lucky
   split
   · rfl
-  · rw [if_pos (by rcases h with e | e | e <;> simp [e])]
+  · rw [ite_eq_left (by rcases h with e | e | e <;> simp [e])]
 
 theorem SATState.sfr {Φ : (Nat → Bool) → Prop} {s0 t u : Solver} (h : SATState Φ s0 t) (hu : SFr u t) :
     SATState Φ s0 u :=
@@ -209,8 +209,8 @@ theorem kissatSearch_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred 
     ((search P s).1 = 20 → ¬ ∃ β, Φ β) ∧ ((search P s).1 = 10 → SATState Φ s (search P s).2) := by
   unfold search
   by_cases hi : s.inconsistent = true
-  · rw [if_pos hi]; exact ⟨fun _ => h.incons hi, fun e => by simp at e⟩
-  rw [if_neg hi]
+  · rw [ite_eq_left hi]; exact ⟨fun _ => h.incons hi, fun e => by simp at e⟩
+  rw [ite_eq_right hi]
   have L1 : LuckyOut Φ s (if s.options.luckyearly != 0 then s.lucky else (0, s)) := by
     split
     · exact lucky_spec h
@@ -220,9 +220,9 @@ theorem kissatSearch_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred 
   obtain ⟨a1, a2, a3⟩ := L1
   dsimp only at a1 a2 a3 ⊢
   by_cases h1 : r1 ≠ 0
-  · rw [if_pos (by simpa using h1)]; exact ⟨a2, a1⟩
+  · rw [ite_eq_left (by simpa using h1)]; exact ⟨a2, a1⟩
   have h1 : r1 = 0 := Decidable.not_not.mp h1
-  rw [if_neg (by simp [h1])]
+  rw [ite_eq_right (by simp [h1])]
   have G1 := a3 h1
   have L2 : (if s1.options.preprocess != 0 && s1.options.probe != 0 && s1.options.preprocessprobe != 0 then
       P.preprocess s1 else (0, s1)).1 = 0 ∧
@@ -239,7 +239,7 @@ theorem kissatSearch_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred 
   obtain ⟨r2, s2⟩ := R
   obtain ⟨b1, G2⟩ := L2
   dsimp only at b1 G2 ⊢
-  rw [if_neg (by simp [b1])]
+  rw [ite_eq_right (by simp [b1])]
   have L3 : LuckyOut Φ s (if s2.options.luckylate != 0 then s2.lucky else (0, s2)) := by
     rcases G2 with hf | ⟨g1, g2⟩
     · have : (if s2.options.luckylate != 0 then s2.lucky else (0, s2)) = (0, s2) := by
@@ -259,9 +259,9 @@ theorem kissatSearch_spec {Φ : (Nat → Bool) → Prop} {P : Procedures} (hred 
   obtain ⟨c1, c2, c3⟩ := L3
   dsimp only at c1 c2 c3 ⊢
   by_cases h3 : r3 ≠ 0
-  · rw [if_pos (by simpa using h3)]; exact ⟨c2, c1⟩
+  · rw [ite_eq_left (by simpa using h3)]; exact ⟨c2, c1⟩
   have h3 : r3 = 0 := Decidable.not_not.mp h3
-  rw [if_neg (by simp [h3])]
+  rw [ite_eq_right (by simp [h3])]
   exact searchTail_spec hred hprobe helim (c3 h3)
 
 end Solver

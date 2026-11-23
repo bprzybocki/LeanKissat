@@ -212,7 +212,7 @@ structure PickAcc where
 def pickScores (ctx : WalkCtx) (values : ByteArray) (counts : Array UInt32) (src : U32Vec)
     (off size j : Nat) (k : Nat) (scores : FloatArray) (sum : Float) (picked : Lit)
     (steps : UInt64) : PickAcc :=
-  if h : j < size then
+  if _h : j < size then
     let lit := src.get! (off + j)
     if values.get! lit.toNat == 0 then
       pickScores ctx values counts src off size (j + 1) k scores sum picked steps
@@ -384,17 +384,17 @@ def walkStep (ctx : WalkCtx) (w : Walker) : Walker :=
   `make_clauses` and `break_clauses` start with `steps = 1`); the runtime check
   `st < w.steps` is therefore always true and only serves the termination proof. -/
 def walkRound (ctx : WalkCtx) (limit : UInt64) (w : Walker) : Walker :=
-  if hl : w.steps < limit then
+  if _hl : w.steps < limit then
     if w.minimum != 0 then
       let st := w.steps
       let w' := walkStep ctx w
-      if h : st < w'.steps then walkRound ctx limit w' else w'
+      if _h : st < w'.steps then walkRound ctx limit w' else w'
     else w
   else w
 termination_by limit.toNat - w.steps.toNat
 decreasing_by
-  have h1 := UInt64.lt_iff_toNat_lt.mp hl
-  have h2 := UInt64.lt_iff_toNat_lt.mp h
+  have h1 := UInt64.lt_iff_toNat_lt.mp _hl
+  have h2 := UInt64.lt_iff_toNat_lt.mp _h
   dsimp only [st, w'] at h2
   omega
 

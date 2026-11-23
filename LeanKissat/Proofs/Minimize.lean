@@ -196,7 +196,7 @@ theorem minimizedIndex_zero {s0 s : Solver} (h : AF s s0) (m : Bool) (lit : Lit)
   split at hp
   · simp at hp
   rename_i h1
-  rw [if_neg h0, if_neg h1] at hn
+  rw [ite_eq_right h0, ite_eq_right h1] at hn
   split at hn
   · simp at hn
   rename_i h2
@@ -219,9 +219,9 @@ theorem ticks_mf (s : Solver) (b : Bool) :
   · exact ⟨⟨af_rfl, rfl, fun _ => rfl, fun _ => rfl, fun _ h => h, rfl, fun h => h⟩, rfl, fun _ => rfl⟩
 
 theorem ticks_mf' (s : Solver) :
-    MF (if h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s) s ∧
-    (if h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s).minimize = s.minimize ∧
-    (∀ i, (if h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s).isRem i = s.isRem i) := by
+    MF (if _h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s) s ∧
+    (if _h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s).minimize = s.minimize ∧
+    (∀ i, (if _h : (s.options.minimizeticks != 0) = true then INC! s search_ticks else s).isRem i = s.isRem i) := by
   split
   · exact ⟨⟨af_rfl, rfl, fun _ => rfl, fun _ => rfl, fun _ h => h, rfl, fun h => h⟩, rfl, fun _ => rfl⟩
   · exact ⟨MF.refl _, rfl, fun _ => rfl⟩
@@ -415,14 +415,14 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     (M4 s0 B m maxD) (M5 s0 B m maxD) ?c1 ?c2 ?c3 ?c4 ?c5 ?c6 ?c7 ?c8 ?c9 ?c10 ?c11 ?c12 ?c13 ?c14 ?c15 ?c16 ?c17
   case c1 =>
     intro s lit depth hd hs hg hf
-    rw [minimizeLiteral, dif_pos hd]
+    rw [minimizeLiteral, dite_eq_left hd]
     exact ⟨MF.refl _, hg, rfl, fun h => absurd h (by simp)⟩
   case c2 =>
     intro s lit depth hd idx tmp hp' hs hg hf
     have hp : s.minimizedIndex m (IDX lit) depth > 0 := hp'
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
-    rw [if_pos hp]
+    rw [ite_eq_left hp]
     refine ⟨MF.refl _, hg, rfl, fun _ => ?_⟩
     rcases minimizedIndex_pos hs m lit depth hp with h | h
     · exact Or.inl h
@@ -431,22 +431,22 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     intro s lit depth hd idx tmp hp' hn' hs hg hf
     have hp : ¬ s.minimizedIndex m (IDX lit) depth > 0 := hp'
     have hn : s.minimizedIndex m (IDX lit) depth < 0 := hn'
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
-    rw [if_neg hp, if_pos hn]
+    rw [ite_eq_right hp, ite_eq_left hn]
     exact ⟨MF.refl _, hg, rfl, fun h => absurd h (by simp)⟩
   case c4 =>
     intro s lit depth hd idx tmp hp' hn' res s1 hcall hdz ih4 ih2 hs hg hf
     have hp : ¬ s.minimizedIndex m (IDX lit) depth > 0 := hp'
     have hn : ¬ s.minimizedIndex m (IDX lit) depth < 0 := hn'
     obtain ⟨c1, c2, c3, c4⟩ := minimize_call hb hd hp hn hcall ih4 ih2 hs hg hf
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
     have hcall2 := hcall
     simp (config := {zetaDelta := true}) only [dite_eq_ite] at hcall2
-    rw [if_neg hp, if_neg hn, hcall2]
+    rw [ite_eq_right hp, ite_eq_right hn, hcall2]
     simp only
-    rw [if_pos hdz]
+    rw [ite_eq_left hdz]
     have hd0 : depth = 0 := by simpa using hdz
     exact ⟨c1, c2, c3, fun h => Or.inr (Or.inr ⟨hd0, c4 h⟩)⟩
   case c5 =>
@@ -454,13 +454,13 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     have hp : ¬ s.minimizedIndex m (IDX lit) depth > 0 := hp'
     have hn : ¬ s.minimizedIndex m (IDX lit) depth < 0 := hn'
     obtain ⟨c1, c2, c3, c4⟩ := minimize_call hb hd hp hn hcall ih4 ih2 hs hg hf
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
     have hcall2 := hcall
     simp (config := {zetaDelta := true}) only [dite_eq_ite] at hcall2
-    rw [if_neg hp, if_neg hn, hcall2]
+    rw [ite_eq_right hp, ite_eq_right hn, hcall2]
     simp only
-    rw [if_neg hdz, if_pos hres]
+    rw [ite_eq_right hdz, ite_eq_left hres]
     have hsz : (IDX lit).toNat < s1.asg.aBits.size := by
       rw [(c1.af.trans hs).bitsSize]; have := hb.inv.rsizes.2.1; have := hb.valid_false hf
       unfold ValidLit at this; omega
@@ -473,13 +473,13 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     have hn : ¬ s.minimizedIndex m (IDX lit) depth < 0 := hn'
     obtain ⟨c1, c2, c3, c4⟩ := minimize_call hb hd hp hn hcall ih4 ih2 hs hg hf
     obtain ⟨z1, _, _⟩ := minimizedIndex_zero hs m lit depth hp hn
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
     have hcall2 := hcall
     simp (config := {zetaDelta := true}) only [dite_eq_ite] at hcall2
-    rw [if_neg hp, if_neg hn, hcall2]
+    rw [ite_eq_right hp, ite_eq_right hn, hcall2]
     simp only
-    rw [if_neg hdz, if_neg hres, if_pos hrem]
+    rw [ite_eq_right hdz, ite_eq_right hres, ite_eq_left hrem]
     have hres' : res = true := by simpa using hres
     have hsz : (IDX lit).toNat < s1.asg.aBits.size := by
       rw [(c1.af.trans hs).bitsSize]; have := hb.inv.rsizes.2.1; have := hb.valid_false hf
@@ -493,13 +493,13 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     have hp : ¬ s.minimizedIndex m (IDX lit) depth > 0 := hp'
     have hn : ¬ s.minimizedIndex m (IDX lit) depth < 0 := hn'
     obtain ⟨c1, c2, c3, c4⟩ := minimize_call hb hd hp hn hcall ih4 ih2 hs hg hf
-    rw [minimizeLiteral, dif_neg hd]
+    rw [minimizeLiteral, dite_eq_right hd]
     simp only
     have hcall2 := hcall
     simp (config := {zetaDelta := true}) only [dite_eq_ite] at hcall2
-    rw [if_neg hp, if_neg hn, hcall2]
+    rw [ite_eq_right hp, ite_eq_right hn, hcall2]
     simp only
-    rw [if_neg hdz, if_neg hres, if_neg hrem]
+    rw [ite_eq_right hdz, ite_eq_right hres, ite_eq_right hrem]
     have hr : s1.isRem (IDX lit) = true := by
       have : s1.abit idx ABits.removable = true := by simpa using hrem
       exact this
@@ -525,9 +525,9 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
   case c9 =>
     intro s ref notLit depth hd n i hi other heq ih hs hg hr hn hlits
     obtain ⟨r1, r2, r3, r4⟩ := ih hs hg hr hn hlits
-    rw [minimizeRefLoop, dif_pos hi]
+    rw [minimizeRefLoop, dite_eq_left hi]
     simp only
-    rw [if_pos heq]
+    rw [ite_eq_left heq]
     refine ⟨r1, r2, r3, fun hres k hk1 hk2 hne => ?_⟩
     by_cases e : k = i
     · subst e
@@ -541,11 +541,11 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     have hne' : s0.arena.lit ref i ≠ notLit := by rw [← ho]; intro e; exact hne (beq_iff_eq.mpr e)
     obtain ⟨r1, r2, r3, _⟩ := ih1 hs hg (by rw [ho]; exact hlits i hi hne')
     rw [hcall] at r1 r2 r3
-    rw [minimizeRefLoop, dif_pos hi]
+    rw [minimizeRefLoop, dite_eq_left hi]
     simp only
-    rw [if_neg hne, hcall]
+    rw [ite_eq_right hne, hcall]
     simp only
-    rw [if_pos hres]
+    rw [ite_eq_left hres]
     exact ⟨r1, r2, r3, fun h => absurd h (by simp)⟩
   case c11 =>
     intro s ref notLit depth hd n i hi other hne res s1 hcall hres ih1 ih3 hs hg hr hn hlits
@@ -556,11 +556,11 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     simp only at r4
     have hres' : res = true := by simpa using hres
     obtain ⟨q1, q2, q3, q4⟩ := ih3 (r1.af.trans hs) r2 hr hn hlits
-    rw [minimizeRefLoop, dif_pos hi]
+    rw [minimizeRefLoop, dite_eq_left hi]
     simp only
-    rw [if_neg hne, hcall]
+    rw [ite_eq_right hne, hcall]
     simp only
-    rw [if_neg hres]
+    rw [ite_eq_right hres]
     refine ⟨q1.trans r1, q2, by rw [q3, r3], fun h k hk1 hk2 hk3 => ?_⟩
     by_cases e : k = i
     · subst e
@@ -571,7 +571,7 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     · exact q4 h k (by omega) hk2 hk3
   case c12 =>
     intro s ref notLit depth hd n i hi hs hg hr hn hlits
-    rw [minimizeRefLoop, dif_neg hi]
+    rw [minimizeRefLoop, dite_eq_right hi]
     exact ⟨MF.refl _, hg, rfl, fun _ k hk1 hk2 => absurd hk2 (by omega)⟩
   case c13 =>
     intro s lit depth hd fuel res s1 hch ih5 hs hg hf
@@ -628,7 +628,7 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     have hne' : (s.minimizedIndex m (IDX next) 1 != 0) = true := hne
     rw [minimizeBinaryChain]
     simp only
-    rw [if_pos hne']
+    rw [ite_eq_left hne']
     refine ⟨MF.refl _, hg, ⟨[], by simp⟩, fun v hv => by
       obtain ⟨y, h1, h2, h3, _⟩ := hpre.2 v hv; exact ⟨y, h1, h2, h3⟩, fun hpos => ?_⟩
     have hpos' : s.minimizedIndex m (IDX next) 1 > 0 := by simpa using hpos
@@ -676,7 +676,7 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
         s1.minimizeReference m maxD (s1.reasonIdx idx) next (depth + 1) (by omega) := by
       rw [minimizeBinaryChain]
       simp only [s1, idx, tmp] at hz hnb ⊢
-      rw [if_neg hz', if_pos hnb]
+      rw [ite_eq_right hz', ite_eq_left hnb]
     rw [e]
     generalize s1.minimizeReference m maxD (s1.reasonIdx idx) next (depth + 1) _ = R at r1 r2 r3 r4 ⊢
     rw [eR] at r4
@@ -761,7 +761,7 @@ theorem minimize_all {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
         s1.minimizeBinaryChain m maxD (s1.reasonIdx idx) depth hd fuel := by
       rw [minimizeBinaryChain]
       simp only [s1, idx, tmp] at hz hnb ⊢
-      rw [if_neg hz', if_neg hnb]
+      rw [ite_eq_right hz', ite_eq_right hnb]
     rw [e]
     generalize s1.minimizeBinaryChain m maxD (s1.reasonIdx idx) depth hd fuel = R at r1 r2 r3 r4 r5 ⊢
     refine ⟨r1.trans hs1m, r2, ⟨IDX next :: T, by rw [r3, hv1]; simp⟩, r5, fun hres => ?_⟩

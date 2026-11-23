@@ -365,11 +365,11 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
     intro x y
     rw [hWL']
     by_cases e1 : x = NOT lit
-    · rw [if_pos e1, e1, hWLn]; simp
-    · rw [if_neg e1]
+    · rw [ite_eq_left e1, e1, hWLn]; simp
+    · rw [ite_eq_right e1]
       by_cases e2 : x = repl
-      · rw [if_pos e2]; simp
-      · rw [if_neg e2]
+      · rw [ite_eq_left e2]; simp
+      · rw [ite_eq_right e2]
   refine ⟨⟨?_, ?_, ?_⟩, ?_, fun x y => (hbinIff x y).trans (h.bins x y), ?wf, ?dv⟩
   case dv =>
     intro d hd
@@ -383,15 +383,15 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
     rw [hWL'] at he
     have hewf := h.wf (NOT lit) (.large b r) (by rw [hWLn]; simp)
     by_cases e1 : l = NOT lit
-    · rw [if_pos e1] at he
+    · rw [ite_eq_left e1] at he
       refine h.wf (NOT lit) e ?_
       rw [hWLn]; simp only [List.mem_append, List.mem_cons] at he ⊢
       rcases he with he | he
       · exact Or.inl he
       · exact Or.inr (Or.inr he)
-    · rw [if_neg e1] at he
+    · rw [ite_eq_right e1] at he
       by_cases e2 : l = repl
-      · rw [if_pos e2] at he
+      · rw [ite_eq_left e2] at he
         simp only [List.mem_append, List.mem_singleton] at he
         rcases he with he | rfl
         · exact h.wf l e he
@@ -403,26 +403,26 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
           have hb := H.ctx.ws.varsBound
           unfold ValidLit at hv; rw [IDX_toNat] at hv
           exact (by simp only [V] at hv; omega)
-      · rw [if_neg e2] at he; exact h.wf l e he
+      · rw [ite_eq_right e2] at he; exact h.wf l e he
   · -- refOK
     intro l b'' r'' hm
     rw [hWL'] at hm
     have hold : WEntry.large b'' r'' ∈ WL s0 (NOT lit) st (.large b r :: rest) l ∨
         (l = repl ∧ b'' = other ∧ r'' = r) := by
       by_cases e1 : l = NOT lit
-      · rw [if_pos e1] at hm; left; rw [e1, hWLn]
+      · rw [ite_eq_left e1] at hm; left; rw [e1, hWLn]
         simp only [List.mem_append, List.mem_cons] at hm ⊢
         rcases hm with hm | hm
         · exact Or.inl hm
         · exact Or.inr (Or.inr hm)
-      · rw [if_neg e1] at hm
+      · rw [ite_eq_right e1] at hm
         by_cases e2 : l = repl
-        · rw [if_pos e2] at hm
+        · rw [ite_eq_left e2] at hm
           simp only [List.mem_append, List.mem_singleton, WEntry.large.injEq] at hm
           rcases hm with hm | ⟨hb, hr⟩
           · exact Or.inl hm
           · exact Or.inr ⟨e2, hb, hr⟩
-        · rw [if_neg e2] at hm; exact Or.inl hm
+        · rw [ite_eq_right e2] at hm; exact Or.inl hm
     rcases hold with hold | ⟨rfl, rfl, rfl⟩
     · obtain ⟨hc, hlv⟩ := hW.refOK _ _ _ hold
       refine ⟨by rw [hchain']; exact hc, fun hg' => ?_⟩
@@ -434,7 +434,7 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
         have hl' : l = other := by
           rcases hwhere l b'' hold with e1 | e1
           · exfalso
-            rw [if_pos e1] at hm
+            rw [ite_eq_left e1] at hm
             exact hnotin b'' hm
           · exact e1
         exact ⟨Or.inl (by rw [hw0, hl']), hperm.mem_iff.mpr hb⟩
@@ -460,11 +460,11 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
         fun x hx => hval x (hperm.mem_iff.mp hx)⟩
       · rw [hsearch]; simp; omega
       · rw [hsearch, hsz]; simp; omega
-      · rw [hw0, hWL', if_neg hneo, if_neg hReo.symm]
+      · rw [hw0, hWL', ite_eq_right hneo, ite_eq_right hReo.symm]
         rcases hw with ⟨_, h1⟩ | ⟨_, h0⟩
         · rw [← h1]; exact hc1
         · rw [← h0]; exact hc0
-      · rw [hw1, hWL', if_neg hneR, if_pos rfl]
+      · rw [hw1, hWL', ite_eq_right hneR, ite_eq_left rfl]
         have h0 : countRef r'' (WL s0 (NOT lit) st (.large b r'' :: rest) repl) = 0 := by
           apply Classical.byContradiction
           intro hpos
@@ -483,11 +483,11 @@ theorem WSInv.replace {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest :
         intro x
         rw [hWL']
         by_cases f1 : x = NOT lit
-        · rw [if_pos f1, f1, hWLn]; exact countRef_drop_ne r'' r _ _ b (Ne.symm e)
-        · rw [if_neg f1]
+        · rw [ite_eq_left f1, f1, hWLn]; exact countRef_drop_ne r'' r _ _ b (Ne.symm e)
+        · rw [ite_eq_right f1]
           by_cases f2 : x = repl
-          · rw [if_pos f2]; exact countRef_append_large_ne r'' r _ other (Ne.symm e)
-          · rw [if_neg f2]
+          · rw [ite_eq_left f2]; exact countRef_append_large_ne r'' r _ other (Ne.symm e)
+          · rw [ite_eq_right f2]
       refine ⟨by rw [hsz]; exact h3, by rw [hL]; exact hnd, by rw [hS]; exact hs2,
         by rw [hS, hsz]; exact hslt, by rw [hcnt, e0]; exact hc0, by rw [hcnt, e1]; exact hc1,
         by rw [hL]; exact hval⟩
@@ -525,18 +525,18 @@ theorem ws_step {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : List 
     unfold PS.step
     simp only
     by_cases hbt : vTrue (st.a.values.get! b.toNat) = true
-    · rw [if_pos hbt]; exact h.move _ rfl rfl rfl
-    rw [if_neg hbt]
+    · rw [ite_eq_left hbt]; exact h.move _ rfl rfl rfl
+    rw [ite_eq_right hbt]
     have hr0 := (H.ctx.ws.refOK _ _ _ H.mem).1
     have hgeq : st.arena.garbage r = s0.arena.garbage r := by
       unfold garbage flag; rw [H.run.arena.word0 r hr0]
     by_cases hg : st.arena.garbage r = true
-    · rw [if_pos hg]; exact h.dropGarbage hg
-    rw [if_neg hg]
+    · rw [ite_eq_left hg]; exact h.dropGarbage hg
+    rw [ite_eq_right hg]
     have hg' : st.arena.garbage r = false := by simpa using hg
     have F := H.largeFacts (by rw [← hgeq]; exact hg')
     by_cases hot : vTrue (st.a.values.get! (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit).toNat) = true
-    · rw [if_pos hot]
+    · rw [ite_eq_left hot]
       have hmem : st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit ∈ st.arena.litsL r := by
         rcases F.watch with ⟨_, h1⟩ | ⟨_, h0⟩
         · rw [← h1]; exact lit_mem_litsL _ _ _ (by have := F.size3; omega)
@@ -546,7 +546,7 @@ theorem ws_step {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : List 
       have hb := H.ctx.ws.varsBound
       unfold ValidLit at hv; rw [IDX_toNat] at hv
       simp only [V] at hv; omega
-    rw [if_neg hot]
+    rw [ite_eq_right hot]
     have SS := search_spec st.arena st.a.values r _ _ F.searched2 F.searchedLt
     simp only at SS
     generalize (if findReplacement st.arena st.a.values r (st.arena.searched r).toNat
@@ -556,8 +556,8 @@ theorem ws_step {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : List 
         (st.arena.searched r).toNat then findReplacement st.arena st.a.values r 2 (st.arena.searched r).toNat
       else (st.arena.size r).toNat) = R at SS ⊢
     by_cases hR : R < (st.arena.size r).toNat
-    · rw [if_pos hR]; exact h.replace H F hg' R (SS.1 hR).1 hR (SS.1 hR).2
-    rw [if_neg hR]
+    · rw [ite_eq_left hR]; exact h.replace H F hg' R (SS.1 hR).1 hR (SS.1 hR).2
+    rw [ite_eq_right hR]
     split
     · exact h.move _ rfl rfl rfl
     · exact h.move _ rfl rfl rfl

@@ -165,7 +165,7 @@ theorem pushAssign_spec {Φ : (Nat → Bool) → Prop} {s W : Solver} (hs : SInv
     rw [hl, UInt32.toNat_add]; simp; omega
   have heq : (W.pushFrame lit).assign probing W.level false lit DECISION_REASON =
       (W.pushFrame lit).withAssign probing W.level false lit DECISION_REASON := by
-    rw [assign_eq]; rw [if_neg (by simpa using hk0)]
+    rw [assign_eq]; rw [ite_eq_right (by simpa using hk0)]
   rw [heq]
   generalize hV : s.withAssign probing W.level false lit DECISION_REASON = V
   have hTA : ((W.pushFrame lit).withAssign probing W.level false lit DECISION_REASON).asg = V.asg := by
@@ -230,13 +230,13 @@ theorem pushAssign_spec {Φ : (Nat → Bool) → Prop} {s W : Solver} (hs : SInv
           rcases (IDX_eq_iff l lit).mp e with rfl | rfl
           · exact hun.1 hlt
           · have := (hs.core.valCons (NOT lit)).1.mp hlt; rw [NOT_NOT] at this; exact hun.2 this
-        rw [if_neg hne]; exact hL.pushLe p l hpl
+        rw [ite_eq_right hne]; exact hL.pushLe p l hpl
       · rw [List.getElem?_append_right (by omega)] at hpl
         have hp' : p = s.trailL.length := by
           have := (List.getElem?_eq_some_iff.mp hpl).1; simp at this; omega
         subst hp'
         simp at hpl; subst hpl
-        rw [hpushNew, eL, hVL, if_pos rfl, hkN]; exact Nat.le_refl _
+        rw [hpushNew, eL, hVL, ite_eq_left rfl, hkN]; exact Nat.le_refl _
     · rw [hframes]; refine List.pairwise_append.mpr ⟨hL.sorted, by simp, ?_⟩
       intro a ha' b hb; simp at hb; subst hb; exact Nat.le_of_lt (hL.framesLt a ha')
     · rw [hframes, tLv]; simp [hL.len]; omega

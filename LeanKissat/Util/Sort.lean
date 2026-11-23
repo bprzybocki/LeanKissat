@@ -69,7 +69,7 @@ instance {α : Type} [Inhabited α] : SwapBuf (Array α) α where
 theorem U32Vec.toArray_spec (a : U32Vec) : a.toArray.size = a.size ∧
     ∀ i (h : i < a.size) (h' : i < a.toArray.size), a.toArray[i] = a[i] := by
   unfold U32Vec.toArray
-  simp [Std.Legacy.Range.forIn'_eq_forIn'_range']
+  simp
 
 @[simp] theorem U32Vec.getElem_toArray (a : U32Vec) (i : Nat) (h : i < a.toArray.size) :
     a.toArray[i] = a[i]'(by rw [(U32Vec.toArray_spec a).1] at h; exact h) :=

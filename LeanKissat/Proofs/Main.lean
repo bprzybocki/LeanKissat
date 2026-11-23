@@ -126,14 +126,14 @@ theorem reserved_impBase {F : CNF Nat} {opts : Options} {s : Solver} (hr : Reser
 theorem search_flagged {P : Procedures} (hpre : ∀ s, (P.preprocess s).1 = 0 ∧ Flagged (P.preprocess s).2)
     {s : Solver} (hf : Flagged s) (hi : s.inconsistent = false) : (search P s).1 = 0 := by
   unfold search
-  rw [if_neg (by simp [hi])]
+  rw [ite_eq_right (by simp [hi])]
   have h1 : (if s.options.luckyearly != 0 then s.lucky else (0, s)) = (0, s) := by
     split
     · exact lucky_flagged s hf
     · rfl
   rw [h1]
   dsimp only
-  rw [if_neg (by simp)]
+  rw [ite_eq_right (by simp)]
   have h2 : (if s.options.preprocess != 0 && s.options.probe != 0 && s.options.preprocessprobe != 0 then
       P.preprocess s else (0, s)).1 = 0 ∧ Flagged (if s.options.preprocess != 0 && s.options.probe != 0 &&
       s.options.preprocessprobe != 0 then P.preprocess s else (0, s)).2 := by
@@ -146,14 +146,14 @@ theorem search_flagged {P : Procedures} (hpre : ∀ s, (P.preprocess s).1 = 0 �
   obtain ⟨hr, hu⟩ := h2
   dsimp only at hr hu ⊢
   subst hr
-  rw [if_neg (by simp)]
+  rw [ite_eq_right (by simp)]
   have h3 : (if u.options.luckylate != 0 then u.lucky else (0, u)) = (0, u) := by
     split
     · exact lucky_flagged u hu
     · rfl
   rw [h3]
   dsimp only
-  rw [if_neg (by simp)]
+  rw [ite_eq_right (by simp)]
   split
   · rw [searchLoop_flagged P (((startSearch_fm _).trans (classify_fm _)).flagged hu)]
   · rfl
@@ -162,7 +162,7 @@ theorem procedures_hyps :
     (∀ s, (procedures.probe s).1 = 0 ∧ Flagged (procedures.probe s).2) ∧
     (∀ s, (procedures.eliminate s).1 = 0 ∧ Flagged (procedures.eliminate s).2) ∧
     (∀ s, (procedures.preprocess s).1 = 0 ∧ Flagged (procedures.preprocess s).2) :=
-  ⟨fun s => ⟨rfl, Or.inr (Or.inr rfl)⟩, fun s => ⟨rfl, Or.inr (Or.inr rfl)⟩, fun s => ⟨rfl, Or.inr (Or.inr rfl)⟩⟩
+  ⟨fun _s => ⟨rfl, Or.inr (Or.inr rfl)⟩, fun _s => ⟨rfl, Or.inr (Or.inr rfl)⟩, fun _s => ⟨rfl, Or.inr (Or.inr rfl)⟩⟩
 
 /-- The state handed to `kissat_search` after importing `F`. -/
 theorem import_spec {opts : Options} {F : CNF Nat} (hc : PlainConfig opts) (hv : CNF.ValidVars F) :
@@ -197,7 +197,7 @@ theorem solveCNF_sat {opts : Options} {F : CNF Nat} (hc : PlainConfig opts) (hv 
   unfold solveCNF at h10 ⊢
   dsimp only at h10 ⊢
   rcases import_spec hc hv with ⟨hi, _⟩ | ⟨hf, hi⟩ | ⟨hb, hcov⟩
-  · unfold search at h10; rw [if_pos hi] at h10; simp at h10
+  · unfold search at h10; rw [ite_eq_left hi] at h10; simp at h10
   · rw [search_flagged hp3 hf hi] at h10; simp at h10
   · exact sat_final ((kissatSearch_spec (P := procedures) hred hp1 hp2 hp3 hb.search).2 h10) hb.search.inv hcov hF
 

@@ -72,7 +72,7 @@ termination_by (maxDepth + 2 - depth, 1, 0)
 /-- The literal loop of `minimize_reference`. -/
 def minimizeRefLoop (s : Solver) (minimizing : Bool) (maxDepth : Nat) (ref : Ref)
     (notLit : Lit) (depth : Nat) (hd : depth ≤ maxDepth) (n i : Nat) : Bool × Solver :=
-  if hi : i < n then
+  if _hi : i < n then
     let other := s.arena.lit ref i
     if other == notLit then minimizeRefLoop s minimizing maxDepth ref notLit depth hd n (i + 1)
     else

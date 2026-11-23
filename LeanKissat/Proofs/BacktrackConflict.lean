@@ -28,7 +28,7 @@ theorem backtrackLoop_anaSide (a : Asg) (newLevel : UInt32) (stop : Nat) :
 theorem backtrack_anaSide (s : Solver) (newLevel : UInt32) :
     anaSide (s.backtrackWithoutUpdatingPhases newLevel) = anaSide s := by
   by_cases h : s.level = newLevel
-  · unfold backtrackWithoutUpdatingPhases; rw [if_pos (by simp [h])]
+  · unfold backtrackWithoutUpdatingPhases; rw [ite_eq_left (by simp [h])]
   · rw [backtrack_eq s newLevel h]
     unfold btFinish
     generalize hr : backtrackLoop s.asg ({ s.shrinkFrames (newLevel.toNat + 1) with asg := {} }) newLevel
@@ -88,7 +88,7 @@ theorem backtrackAfterConflict_spec {Φ : (Nat → Bool) → Prop} {s : Solver} 
   have hpos : 0 < s.level.toNat := by
     have : s.level.toNat ≠ 0 := fun e => hl0 (UInt32.toNat_inj.mp (by simpa using e))
     omega
-  rw [if_pos hne]
+  rw [ite_eq_left hne]
   have hlt1 : s.level - 1 < s.level := by
     have : 0 < s.level.toNat := by
       have : s.level.toNat ≠ 0 := fun e => hl0 (UInt32.toNat_inj.mp (by simpa using e))
@@ -112,7 +112,7 @@ theorem backtrackAfterConflict_spec {Φ : (Nat → Bool) → Prop} {s : Solver} 
     intro c; rw [hU.inDB c, inDB_congr b5.watches b5.arena c]
   by_cases heq : s2.level = newLevel
   · have : s2.backtrackWithoutUpdatingPhases newLevel = s2 := by
-      unfold backtrackWithoutUpdatingPhases; rw [if_pos (by simp [heq])]
+      unfold backtrackWithoutUpdatingPhases; rw [ite_eq_left (by simp [heq])]
     rw [this]
     have eT2 : ∀ l, s2.IsTrue l ↔ s1.IsTrue l := by intro l; unfold IsTrue; rw [hU.asg]
     have hlt1' : (s.level - 1).toNat = s.level.toNat - 1 := by

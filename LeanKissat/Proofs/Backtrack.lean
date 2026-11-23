@@ -135,11 +135,11 @@ theorem backtrackLoop_spec (a0 : Asg) (newLevel : UInt32) (newEnd : Nat)
       simp only [ByteArray.size_set!', h.vsize]
       rw [← hlit] at hv ⊢
       by_cases e1 : notLit.toNat = j
-      · rw [if_pos ⟨e1, hv.2⟩, if_pos ⟨lit, by simp, Or.inr e1.symm⟩]
-      · rw [if_neg (fun h => e1 h.1)]
+      · rw [ite_eq_left ⟨e1, hv.2⟩, ite_eq_left ⟨lit, by simp, Or.inr e1.symm⟩]
+      · rw [ite_eq_right (fun h => e1 h.1)]
         by_cases e2 : lit.toNat = j
-        · rw [if_pos ⟨e2, hv.1⟩, if_pos ⟨lit, by simp, Or.inl e2.symm⟩]
-        · rw [if_neg (fun h => e2 h.1)]
+        · rw [ite_eq_left ⟨e2, hv.1⟩, ite_eq_left ⟨lit, by simp, Or.inl e2.symm⟩]
+        · rw [ite_eq_right (fun h => e2 h.1)]
           have : (∃ l ∈ removedB a0 newLevel newEnd p ++ [lit], j = l.toNat ∨ j = (NOT l).toNat) ↔
               (∃ l ∈ removedB a0 newLevel newEnd p, j = l.toNat ∨ j = (NOT l).toNat) := by
             constructor
@@ -184,7 +184,7 @@ theorem backtrack_eq (s : Solver) (newLevel : UInt32) (h : s.level ≠ newLevel)
           (s.frameTrailAt (UInt32.ofNat (newLevel.toNat + 1))).toNat s.asg.trail.size) := by
   unfold backtrackWithoutUpdatingPhases
   have : (s.level == newLevel) = false := by simpa using h
-  rw [if_neg (by simp [this])]
+  rw [ite_eq_right (by simp [this])]
   rfl
 
 /-- Fields not touched by the backtracking loop. -/
@@ -649,8 +649,8 @@ theorem backtrack_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (hs : SInv Φ
           · rintro ⟨x, hx, rfl⟩
             exact ⟨x, hx, two_mul_idx x⟩
         by_cases hz : ∃ l ∈ R, 2 * v = l.toNat ∨ 2 * v = (NOT l).toNat
-        · rw [if_pos hz, hiff.mp hz]; simp
-        · rw [if_neg hz]
+        · rw [ite_eq_left hz, hiff.mp hz]; simp
+        · rw [ite_eq_right hz]
           have : (R.map (fun x => (IDX x).toNat)).contains v = false := by
             cases h : (R.map (fun x => (IDX x).toNat)).contains v
             · rfl

@@ -57,9 +57,9 @@ theorem analyzeLiteral_spec (s : Solver) (lit : Lit) (hsz : (IDX lit).toNat < s.
   simp only
   by_cases h0 : (s.levelIdx (IDX lit) == 0) = true
   · have h0' := (levelIdx_eq_zero s lit).mp h0
-    rw [if_pos h0]
+    rw [ite_eq_left h0]
     refine ⟨AF.refl _, by simp [h0'], by simp [h0'], fun i => by simp [h0'], fun _ _ _ => rfl⟩
-  rw [if_neg h0]
+  rw [ite_eq_right h0]
   have h0' : s.lvl lit ≠ 0 := fun h => h0 ((levelIdx_eq_zero s lit).mpr h)
   generalize hs1 : ({ s with antecedentSize := s.antecedentSize + 1 } : Solver) = s1
   have f1 : AF s1 s := by rw [← hs1]; exact af_rfl
@@ -68,7 +68,7 @@ theorem analyzeLiteral_spec (s : Solver) (lit : Lit) (hsz : (IDX lit).toNat < s.
   have l1 : s1.level = s.level := by rw [← hs1]
   have z1 : s1.asg.aBits.size = s.asg.aBits.size := by rw [← hs1]
   by_cases ha : s1.isAnalyzed (IDX lit) = true
-  · rw [if_pos ha]
+  · rw [ite_eq_left ha]
     have ha' : s.isAnalyzed (IDX lit) = true := by rw [← ha]; unfold isAnalyzed; rw [a1]
     refine ⟨f1, by simp [ha'], by rw [c1]; simp [ha'], fun i => ?_, fun i c _ => a1 i c⟩
     unfold isAnalyzed; rw [a1]
@@ -77,7 +77,7 @@ theorem analyzeLiteral_spec (s : Solver) (lit : Lit) (hsz : (IDX lit).toNat < s.
     · rintro (h | ⟨rfl, _⟩)
       · exact h
       · exact ha'
-  rw [if_neg ha]
+  rw [ite_eq_right ha]
   have ha' : s.isAnalyzed (IDX lit) = false := by
     have : s1.isAnalyzed (IDX lit) = false := Bool.eq_false_iff.mpr ha
     rw [← this]; unfold isAnalyzed; rw [a1]
@@ -112,12 +112,12 @@ theorem analyzeLiteral_spec (s : Solver) (lit : Lit) (hsz : (IDX lit).toNat < s.
   have an3 : ∀ i, s3.isAnalyzed i = s2.isAnalyzed i := by intro i; rw [← hs3]; rfl
   have ab3 : ∀ i c, s3.abit i c = s2.abit i c := by intro i c; rw [← hs3]; rfl
   by_cases hl : (s.levelIdx (IDX lit) == s2.level) = true
-  · rw [if_pos hl]
+  · rw [ite_eq_left hl]
     have hl' : s.lvl lit = s.level.toNat := (levelIdx_eq_level s lit).mp (by rw [← l2]; exact hl)
     have hL0 : s.level.toNat ≠ 0 := hl' ▸ h0'
-    exact ⟨f3, by simp [h0', ha', hl', hL0], by rw [c3]; simp [hl'], fun i => by rw [an3]; exact hanal i,
+    exact ⟨f3, by simp [ha', hl', hL0], by rw [c3]; simp [hl'], fun i => by rw [an3]; exact hanal i,
       fun i c hc => by rw [ab3]; exact hother i c hc⟩
-  · rw [if_neg hl]
+  · rw [ite_eq_right hl]
     have hl' : s.lvl lit ≠ s.level.toNat := fun h => hl (by rw [l2]; exact (levelIdx_eq_level s lit).mpr h)
     split
     · exact ⟨AF.trans_left f2 af_rfl, by simp [hl'], by simp [h0', ha', hl']; rw [c2], hanal, hother⟩
@@ -352,7 +352,7 @@ theorem countP_succ_of_unique {α : Type} (p q : α → Bool) :
     rcases List.mem_cons.mp he with rfl | he'
     · have : ys.countP q = ys.countP p := List.countP_congr (fun x hx => by
         rw [hag x (List.mem_cons_of_mem _ hx) (fun h => hnd.1 (h ▸ hx))])
-      simp [List.countP_cons, hq, hp, this]
+      simp [hq, hp, this]
     · have h1 := ih e he' hnd.2 hq hp (fun x hx hne => hag x (List.mem_cons_of_mem _ hx) hne)
       have hne : y ≠ e := fun h => hnd.1 (h ▸ he')
       have h2 := hag y (List.mem_cons_self ..) hne
@@ -387,7 +387,7 @@ theorem analyzeLiteral_list_new (s : Solver) (lit : Lit) :
   unfold analyzeLiteral
   simp only
   have h0' : ¬ (s.levelIdx (IDX lit) == 0) = true := fun h => h0 ((levelIdx_eq_zero s lit).mp h)
-  rw [if_neg h0']
+  rw [ite_eq_right h0']
   split
   · rename_i h; exact Or.inr h
   have : IDX lit ∈ (s.analyzed.push (IDX lit)).view := by rw [U32Vec.view_push]; simp
@@ -552,7 +552,7 @@ theorem DInv.analyze {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
         · exact Or.inr ⟨A, hA, fun z hz => (hA' z hz).imp_right (mono _)⟩
       · have hold' : s.isAnalyzed (IDX y) = false := by simpa using hold
         refine ⟨fun hlt => ?_, fun heq => Or.inl (hpos heq)⟩
-        rw [sp3, if_pos ⟨by omega, hold', by omega⟩, U32Vec.view_push,
+        rw [sp3, ite_eq_left ⟨by omega, hold', by omega⟩, U32Vec.view_push,
           List.drop_append_of_le_length (by have := h.csize; simp; omega)]
         simp
   case aa =>

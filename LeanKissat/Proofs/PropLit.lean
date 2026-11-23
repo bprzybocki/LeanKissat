@@ -149,8 +149,8 @@ theorem assign_values_var (a : Asg) (probing : Bool) (k : UInt32) (bb : Bool) (x
     rw [UInt32.toNat_mul]; have := IDX_toNat x; have := x.toNat_lt; simp; omega
   rw [← hm]
   rcases key with e | e
-  · rw [e, if_neg (lit_toNat_ne_not x), if_pos rfl]; decide
-  · rw [e, if_pos rfl]; decide
+  · rw [e, ite_eq_right (lit_toNat_ne_not x), ite_eq_left rfl]; decide
+  · rw [e, ite_eq_left rfl]; decide
 
 theorem markFixedLiteral_flags_ne (s : Solver) (lit : Lit) (v : Nat) (hv : v ≠ (IDX lit).toNat) :
     (s.markFixedLiteral lit).flags.get! v = s.flags.get! v := by
@@ -179,7 +179,7 @@ theorem actOK_assign (s : Solver) (a : Asg) (n : Nat) (hsz : 2 * n ≤ a.values.
 
 theorem assign_values_size (a : Asg) (probing : Bool) (k : UInt32) (bb : Bool) (x : Lit) (rr : UInt32) :
     (a.assign probing k bb x rr).values.size = a.values.size := by
-  simp [Asg.assign, ByteArray.size_set!']
+  simp [Asg.assign]
 
 theorem PS.step_shape (probing jump : Bool) (lv : UInt32) (notLit : Lit) (st : PS) (e : WEntry) :
     ((PS.step probing jump lv notLit st e).s.flags = st.s.flags ∧ (PS.step probing jump lv notLit st e).a = st.a) ∨
@@ -282,12 +282,12 @@ theorem wld_spec (d : U32Vec) (wss : Array WVec) (k : Nat) :
       rw [hmod]
       unfold delayedAt
       by_cases e : x.1.toNat = j
-      · rw [if_pos (by rw [hlit]; exact e)]
+      · rw [ite_eq_left (by rw [hlit]; exact e)]
         simp only [List.filterMap_cons, e, ite_true]
         simp only [WVec.push, Array.toList_push, encodeWatches, List.flatMap_cons, WEntry.words,
           List.append_assoc, hw, href, blockingWatch_idem]
         rfl
-      · rw [if_neg (by rw [hlit]; exact e)]
+      · rw [ite_eq_right (by rw [hlit]; exact e)]
         simp only [List.filterMap_cons, e, ite_false]
   | case2 wss k hk =>
     intro dl hdrop _

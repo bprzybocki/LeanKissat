@@ -177,8 +177,8 @@ theorem layout_write {a : Arena} (h : a.Layout) (j : Nat) (v : UInt32)
     have := hj x hx
     simp only [b, word0, size, U32Vec.get!_set!]
     constructor
-    · rw [if_neg (by intro e; exact this.1 e.1)]
-    · rw [if_neg (by intro e; exact this.2 e.1)]
+    · rw [ite_eq_right (by intro e; exact this.1 e.1)]
+    · rw [ite_eq_right (by intro e; exact this.2 e.1)]
   have hlayA := h.chain
   have hshA : ∀ x ∈ a.chain 0 a.sizeWards, a.shrunken x = false :=
     fun x hx => LayoutFrom.not_shrunken hlayA x hx

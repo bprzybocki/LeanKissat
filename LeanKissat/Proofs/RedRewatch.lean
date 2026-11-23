@@ -48,27 +48,27 @@ theorem rwArena_spec (s : Solver) (ref : Ref) (h2 : 2 ≤ (s.arena.size ref).toN
     show ((s.rwWords ref).set! (4 * ref.toNat + 1) 2).get! j = _
     rw [U32Vec.get!_set!]
     by_cases e : 4 * ref.toNat + 1 = j
-    · rw [if_pos ⟨e, by rw [a1, ← e]; exact hb⟩, if_pos e]
-    · rw [if_neg (fun h => e h.1), if_neg e]
+    · rw [ite_eq_left ⟨e, by rw [a1, ← e]; exact hb⟩, ite_eq_left e]
+    · rw [ite_eq_right (fun h => e h.1), ite_eq_right e]
   have hsz : (s.rwArena ref).words.size = s.arena.words.size := by
     show ((s.rwWords ref).set! (4 * ref.toNat + 1) 2).size = _
     rw [U32Vec.size_set!, a1]
   have hsame : ∀ j, j ≠ 4 * ref.toNat + 1 → (j < litPos ref 0 ∨ litPos ref 0 + (s.arena.size ref).toNat ≤ j) →
       (s.rwArena ref).words.get! j = s.arena.words.get! j := by
-    intro j h1 h3; rw [hget, if_neg (Ne.symm h1), a2 j h3]
+    intro j h1 h3; rw [hget, ite_eq_right (Ne.symm h1), a2 j h3]
   have hw0 : (s.rwArena ref).word0 ref = s.arena.word0 ref := by
     unfold word0 base; exact hsame _ (by omega) (Or.inl (by unfold litPos base; omega))
   have hs2 : (s.rwArena ref).size ref = s.arena.size ref := by
     unfold Arena.size base; exact hsame _ (by omega) (Or.inl (by unfold litPos base; omega))
   have hlit : ∀ k, k < (s.arena.size ref).toNat → (s.rwArena ref).lit ref k =
       (s.rwWords ref).get! (litPos ref 0 + k) := by
-    intro k _; unfold Arena.lit; rw [hget, if_neg (by unfold litPos base; omega)]; rfl
+    intro k _; unfold Arena.lit; rw [hget, ite_eq_right (by unfold litPos base; omega)]; rfl
   have hseg : (s.rwArena ref).litsL ref = seg (s.rwWords ref) (litPos ref 0) (s.arena.size ref).toNat := by
     unfold litsL seg; rw [hs2]
     apply List.map_congr_left; intro k hk; simp at hk; exact hlit k hk
   have hseg0 : s.arena.litsL ref = seg s.arena.words (litPos ref 0) (s.arena.size ref).toNat := by
     unfold litsL seg; rfl
-  refine ⟨hsz, hsame, hw0, hs2, by unfold searched base; rw [hget, if_pos rfl], ?_, ?_⟩
+  refine ⟨hsz, hsame, hw0, hs2, by unfold searched base; rw [hget, ite_eq_left rfl], ?_, ?_⟩
   · rw [hseg, hseg0]; exact a3
   · intro ⟨x, hx, hxv⟩
     rw [hlit 0 (by omega), Nat.add_zero]
@@ -249,31 +249,31 @@ theorem rw_step {t : Solver} {start : Ref} {s : Solver} {Dn M : List Ref} {ref :
       have c0 : countRef r (if l = (s.rwArena ref).lit ref 0 then [WEntry.large ((s.rwArena ref).lit ref 1) ref] else [])
           = if r = ref ∧ l = (s.rwArena ref).lit ref 0 then 1 else 0 := by
         by_cases hl : l = (s.rwArena ref).lit ref 0
-        · rw [if_pos hl, countRef_single]
+        · rw [ite_eq_left hl, countRef_single]
           by_cases hr : r = ref
-          · rw [if_pos hr.symm, if_pos ⟨hr, hl⟩]
-          · rw [if_neg (Ne.symm hr), if_neg (fun h => hr h.1)]
-        · rw [if_neg hl, if_neg (fun h => hl h.2)]; rfl
+          · rw [ite_eq_left hr.symm, ite_eq_left ⟨hr, hl⟩]
+          · rw [ite_eq_right (Ne.symm hr), ite_eq_right (fun h => hr h.1)]
+        · rw [ite_eq_right hl, ite_eq_right (fun h => hl h.2)]; rfl
       have c1 : countRef r (if l = (s.rwArena ref).lit ref 1 then [WEntry.large ((s.rwArena ref).lit ref 0) ref] else [])
           = if r = ref ∧ l = (s.rwArena ref).lit ref 1 then 1 else 0 := by
         by_cases hl : l = (s.rwArena ref).lit ref 1
-        · rw [if_pos hl, countRef_single]
+        · rw [ite_eq_left hl, countRef_single]
           by_cases hr : r = ref
-          · rw [if_pos hr.symm, if_pos ⟨hr, hl⟩]
-          · rw [if_neg (Ne.symm hr), if_neg (fun h => hr h.1)]
-        · rw [if_neg hl, if_neg (fun h => hl h.2)]; rfl
+          · rw [ite_eq_left hr.symm, ite_eq_left ⟨hr, hl⟩]
+          · rw [ite_eq_right (Ne.symm hr), ite_eq_right (fun h => hr h.1)]
+        · rw [ite_eq_right hl, ite_eq_right (fun h => hl h.2)]; rfl
       rw [c0, c1, sA]
       by_cases hrD : r ∈ Dn
       · have hne : r ≠ ref := fun e => hrefD (e ▸ hrD)
         obtain ⟨_, _, _, _, d5, d6⟩ := hlitD r hrD
         have hm : r ∈ Dn ++ [ref] := by simp [hrD]
-        simp only [hrD, hm, if_true, hne, false_and, if_false, Nat.add_zero, d5, d6]
+        simp only [hrD, hm, ite_true, hne, false_and, ite_false, Nat.add_zero, d5, d6]
       · by_cases hr : r = ref
         · subst hr
           have hm : r ∈ Dn ++ [r] := by simp
-          simp only [hrD, hm, if_true, if_false, true_and, Nat.zero_add]
+          simp only [hrD, hm, ite_true, ite_false, true_and, Nat.zero_add]
         · have hm : r ∉ Dn ++ [ref] := by simp [hrD, hr]
-          simp only [hrD, hm, hr, if_false, false_and, Nat.add_zero]
+          simp only [hrD, hm, hr, ite_false, false_and, Nat.add_zero]
 
 theorem rw_fold {t : Solver} {start : Ref} {N : List Ref}
     (hN : LayoutTo t.arena start t.arena.sizeWards N)

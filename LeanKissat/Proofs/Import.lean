@@ -128,7 +128,7 @@ theorem growBytes_get (b : ByteArray) (n : Nat) (j : Nat) :
     · simp [h1, show j < b.size + 1 by omega]
     · by_cases h2 : j = b.size
       · subst h2; simp
-      · simp [h1, h2, show ¬ j < b.size + 1 by omega]
+      · simp [h1, show ¬ j < b.size + 1 by omega]
   | case2 b hb =>
     split
     · rfl
@@ -148,7 +148,7 @@ theorem growU32_get (a : U32Vec) (n : Nat) (v : UInt32) (j : Nat) :
     · simp [h1, show j < a.size + 1 by omega]
     · by_cases h2 : j = a.size
       · subst h2; simp [h]
-      · simp [h1, h2, show ¬ j < a.size + 1 by omega]
+      · simp [h1, show ¬ j < a.size + 1 by omega]
   | case2 a h =>
     by_cases h1 : j < a.size
     · simp [h1]
@@ -195,9 +195,9 @@ theorem enlargeVariables_noinc (s : Solver) (h1 : s.vars < s.vars + 1) (h2 : (s.
     s.enlargeVariables (s.vars + 1) = { s with vars := s.vars + 1 } := by
   unfold enlargeVariables
   have h1' := UInt32.lt_iff_toNat_lt.mp h1
-  rw [if_neg (by simp only [ge_iff_le, UInt32.le_iff_toNat_le]; omega)]
+  rw [ite_eq_right (by simp only [ge_iff_le, UInt32.le_iff_toNat_le]; omega)]
   dsimp only
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
 
 /-- Importing the next external variable `e = vars + 1` (its entry is new). -/
 theorem importLiteralAux_next (s : Solver) (e : Nat) (hsz : s.importLit.size = e) (hbs : s.importBits.size = e)
@@ -212,10 +212,10 @@ theorem importLiteralAux_next (s : Solver) (e : Nat) (hsz : s.importLit.size = e
   unfold importLiteralAux
   simp only [hn]
   have hA : s.adjustImports e = { s with importLit := growU32 s.importLit (e + 1), importBits := growBytes s.importBits (e + 1) } := by
-    unfold adjustImports; rw [if_neg (by omega)]
+    unfold adjustImports; rw [ite_eq_right (by omega)]
   rw [hA]
   have hb0 : (growBytes s.importBits (e + 1)).get! e = 0 := by
-    rw [growBytes_get, if_neg (by omega)]
+    rw [growBytes_get, ite_eq_right (by omega)]
   generalize hs1 : ({ s with importLit := growU32 s.importLit (e + 1), importBits := growBytes s.importBits (e + 1) } : Solver) = s1
   have e1 : s1.importBitsAt e = 0 := by rw [← hs1]; exact hb0
   have s1v : s1.vars = s.vars := by rw [← hs1]
@@ -262,44 +262,44 @@ theorem importLiteral_next (s : Solver) (k : Nat) (hm : ImpMap s k) (hv : s.vars
       ImpMap (importUpTo u (k + 1) (k + 1) 0).2 (k + 1) ∧ (importUpTo u (k + 1) (k + 1) 0).2.vars.toNat = k + 1 ∧
       IFr (importUpTo u (k + 1) (k + 1) 0).2 s := by
     intro u h1 h2 h3 h4 h5 h6
-    rw [importUpTo, dif_pos (Nat.le_refl _)]
+    rw [importUpTo, dite_eq_left (Nat.le_refl _)]
     obtain ⟨a1, a2, a3, a4, a5⟩ := importLiteralAux_next u (k + 1) h1 h2 (by rw [h3, hv]) (by rw [h4]; exact hsize) hk
     generalize u.importLiteralAux ((k + 1 : Nat) : Int) false = R at a1 a2 a3 a4 a5
     obtain ⟨il, w⟩ := R
     dsimp only at a1 a2 a3 a4 a5 ⊢
-    rw [importUpTo, dif_neg (by omega)]
+    rw [importUpTo, dite_eq_right (by omega)]
     dsimp only
     have hvars : w.vars.toNat = k + 1 := by rw [a2, UInt32.toNat_add, h3, hv]; simp; omega
     refine ⟨⟨fun e => by omega, fun _ => ⟨by rw [a3]; simp [growU32_size]; omega,
-      by rw [a4]; simp [growBytes_size, ByteArray.size_set!']; omega⟩, fun e he1 he2 => ?_⟩, hvars, a5.trans h5⟩
+      by rw [a4]; simp [growBytes_size]; omega⟩, fun e he1 he2 => ?_⟩, hvars, a5.trans h5⟩
     rw [a3, a4]
     by_cases ee : e = k + 1
     · subst ee
       constructor
       · have hsv : s.vars = UInt32.ofNat k := by apply UInt32.toNat_inj.mp; simp; omega
-        rw [U32Vec.get!_set!]; simp only [U32Vec.size_set!, growU32_size]
-        rw [if_pos (by simp; omega), h3, hsv]; simp
+        rw [U32Vec.get!_set!]; simp only [growU32_size]
+        rw [ite_eq_left (by simp; omega), h3, hsv]; simp
       · rw [ByteArray.get!_set!]; simp [growBytes_size, h2]
     · have he3 : e ≤ k := by omega
       obtain ⟨g1, g2⟩ := h6 e he1 he3
       constructor
-      · rw [U32Vec.get!_set!_ne _ _ _ _ (Ne.symm ee), growU32_get, if_pos (by omega), g1]
-      · rw [ByteArray.get!_set!_ne _ _ _ _ (Ne.symm ee), growBytes_get, if_pos (by omega), g2]
+      · rw [U32Vec.get!_set!_ne _ _ _ _ (Ne.symm ee), growU32_get, ite_eq_left (by omega), g1]
+      · rw [ByteArray.get!_set!_ne _ _ _ _ (Ne.symm ee), growBytes_get, ite_eq_left (by omega), g2]
   unfold importLiteral
-  rw [if_neg (by simp [ht]), hn]
+  rw [ite_eq_right (by simp [ht]), hn]
   by_cases hk0 : k = 0
   · subst hk0
     obtain ⟨z1, z2⟩ := h0 rfl
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     simp only [z1, beq_self_eq_true, ite_true]
     have hA : s.adjustImports 0 = { s with importLit := growU32 s.importLit 1, importBits := growBytes s.importBits 1 } := by
-      unfold adjustImports; rw [if_neg (by omega)]
+      unfold adjustImports; rw [ite_eq_right (by omega)]
     rw [hA]
     have := key { s with importLit := growU32 s.importLit 1, importBits := growBytes s.importBits 1 }
       (by simp [growU32_size, z1]) (by simp [growBytes_size, z2]) rfl rfl (by ifr_rfl) (fun e h1 h2 => by omega)
     simpa using this
   · obtain ⟨z1, z2⟩ := hpos (by omega)
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     simp only [z1, show (k + 1 == 0) = false by simp, Bool.false_eq_true, ite_false]
     have := key s z1 z2 rfl rfl (IFr.refl _) hent
     simpa using this
@@ -452,7 +452,7 @@ theorem activateLiteral_spec (s : Solver) (idx : UInt32) (hidx : idx.toNat < 2 ^
     (∀ j, j ≠ idx.toNat → (s.activateLiteral (LIT idx)).flags.get! j = s.flags.get! j) := by
   have hI := IDX_LIT' idx hidx
   unfold activateLiteral
-  rw [hI, if_neg (by simp [hna])]
+  rw [hI, ite_eq_right (by simp [hna])]
   have hS : IDX (STRIP (LIT idx)) = idx := by
     unfold STRIP; rw [show LIT idx &&& ~~~1 = LIT idx by unfold LIT; bv_k]; exact hI
   obtain ⟨h1, h2, h3, h4⟩ := activateCore_spec s idx hfs
@@ -543,7 +543,7 @@ theorem increaseSize_empty (s : Solver) (n : Nat) (hn : n < 2 ^ 30) (ha : s.asg 
   unfold increaseSize
   by_cases h0 : n = 0
   · subst h0
-    rw [if_pos (by rw [hz]; exact UInt32.zero_le)]
+    rw [ite_eq_left (by rw [hz]; exact UInt32.zero_le)]
     refine ⟨by ifr_rfl, rfl, rfl, rfl, ?_, by omega, ?_, by omega, by omega, ?_, by omega, ?_, ?_, by omega, ?_, by omega,
       ?_, by omega, by omega⟩
     · intro j; rw [ha]; exact e0 j
@@ -553,7 +553,7 @@ theorem increaseSize_empty (s : Solver) (n : Nat) (hn : n < 2 ^ 30) (ha : s.asg 
     · intro j; rw [hf]; exact eU j
     · intro j; rw [hm]; exact e0 j
     · intro j; simp [hw]; rfl
-  · rw [if_neg (by simp only [hz, ge_iff_le, UInt32.le_iff_toNat_le, hn']; simp; omega)]
+  · rw [ite_eq_right (by simp only [hz, ge_iff_le, UInt32.le_iff_toNat_le, hn']; simp; omega)]
     dsimp only
     rw [hn']
     refine ⟨by ifr_rfl, rfl, rfl, rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
@@ -623,7 +623,7 @@ theorem init_reserve_spec (opts : Options) (n : Nat) (hn : n < 2 ^ 30) (ht : opt
   have G := increaseSize_empty s0 n hn i6 i7 i8 i9 i2
   generalize s0.increaseSize (UInt32.ofNat n) = s1 at G
   have g1 : s1.options = opts := by rw [← i5]; exact G.ifr.options
-  rw [if_pos (by simp [g1, ht])]
+  rw [ite_eq_left (by simp [g1, ht])]
   obtain ⟨m1, m2, m3⟩ := reserveImport_spec n hn s1 1 (by omega) (by omega)
     ⟨fun _ => ⟨by rw [G.importLit, i3], by rw [G.importBits, i4]⟩, fun h => by omega, fun e h1 h2 => by omega⟩
     (by rw [G.vars, i1]; rfl) G.size (by rw [g1]; exact ht)

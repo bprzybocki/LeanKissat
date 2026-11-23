@@ -139,7 +139,7 @@ theorem RS.drop {w : Solver} {start : Ref} {s : Solver} {src : Ref} {rest N : Li
   unfold RS at *
   split
   · rename_i hc
-    rw [if_pos hc] at h
+    rw [ite_eq_left hc] at h
     rcases h with ⟨h1, h2, h3⟩ | h | h
     · rcases List.mem_cons.mp h1 with e | h1
       · exact absurd e (hne hc)
@@ -147,7 +147,7 @@ theorem RS.drop {w : Solver} {start : Ref} {s : Solver} {src : Ref} {rest N : Li
     · exact Or.inr (Or.inl h)
     · exact Or.inr (Or.inr h)
   · rename_i hc
-    rw [if_neg hc] at h; exact h
+    rw [ite_eq_right hc] at h; exact h
 
 theorem sweep_garbage {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} {st : SweepState} {src : Ref}
     {rest D N : List Ref} (hp : SwPre w start Q) (hI : SwI w start Q s st src (src :: rest) D N)
@@ -329,14 +329,14 @@ theorem sweep_sat_inv {w : Solver} {start : Ref} {Q : List Ref} {s s2 : Solver} 
     unfold RS at hR ⊢
     split
     · rename_i hc
-      rw [if_pos hc] at hR
+      rw [ite_eq_left hc] at hR
       rw [eR, eBo]
       rcases hR with h | ⟨h1, n, hn, h2, h3⟩ | ⟨h1, h2, h3, h4⟩
       · exact Or.inl h
       · exact Or.inr (Or.inl ⟨h1, n, hn, h2, by rw [hlit n hn, h3]⟩)
       · exact Or.inr (Or.inr ⟨h1, (eB _ _).mpr h2, h3, h4⟩)
     · rename_i hc
-      rw [if_neg hc] at hR
+      rw [ite_eq_right hc] at hR
       rw [eR, eBo]; exact hR
 
 theorem src_ne_decision {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} {st : SweepState} {src : Ref}
@@ -398,10 +398,10 @@ theorem watchBinary_entries (s : Solver) (x y : Lit) (hx : x.toNat < s.watches.s
   unfold watchBinary
   rw [(h2 l).1, (h1 l).1]
   by_cases ex : l = x <;> by_cases ey : l = y
-  · rw [if_pos ey, if_pos ex, if_pos ex, if_pos ey]; try simp
-  · rw [if_neg ey, if_pos ex, if_pos ex, if_neg ey]; try simp
-  · rw [if_pos ey, if_neg ex, if_neg ex, if_pos ey]; try simp
-  · rw [if_neg ey, if_neg ex, if_neg ex, if_neg ey]; try simp
+  · rw [ite_eq_left ey, ite_eq_left ex, ite_eq_left ex, ite_eq_left ey]; try simp
+  · rw [ite_eq_right ey, ite_eq_left ex, ite_eq_left ex, ite_eq_right ey]; try simp
+  · rw [ite_eq_left ey, ite_eq_right ex, ite_eq_right ex, ite_eq_left ey]; try simp
+  · rw [ite_eq_right ey, ite_eq_right ex, ite_eq_right ex, ite_eq_right ey]; try simp
 
 theorem abit_or_binary (v : UInt8) (b : UInt8) (hb : AnaBit b) :
     ((v ||| ABits.binary) &&& b != 0) = (v &&& b != 0) := by
@@ -441,22 +441,22 @@ theorem moveAsg_reads {s t : Solver} {f : Lit} {y : UInt32} {binary : Bool} (h :
     · simp only [ite_true, and_true]
       rw [ByteArray.get!_set!]
       by_cases e : IDX l = IDX f
-      · rw [if_pos ⟨by rw [e], hfb⟩, if_pos e]; rfl
-      · rw [if_neg (fun h => e (UInt32.toNat_inj.mp h.1.symm)), if_neg e]
+      · rw [ite_eq_left ⟨by rw [e], hfb⟩, ite_eq_left e]; rfl
+      · rw [ite_eq_right (fun h => e (UInt32.toNat_inj.mp h.1.symm)), ite_eq_right e]
   refine ⟨?_, ?_, fun b hb => ?_, by rw [hR]; simp, by rw [hB]; split <;> simp⟩
   · unfold reasonOf reasonIdx; rw [hR, U32Vec.get!_set!]
     by_cases e : IDX l = IDX f
-    · rw [if_pos e, if_pos ⟨by rw [e], by rw [e]; exact hf⟩]
-    · rw [if_neg e, if_neg (fun h => e (UInt32.toNat_inj.mp h.1.symm))]
+    · rw [ite_eq_left e, ite_eq_left ⟨by rw [e], by rw [e]; exact hf⟩]
+    · rw [ite_eq_right e, ite_eq_right (fun h => e (UInt32.toNat_inj.mp h.1.symm))]
   · unfold binOf isBinaryReason; rw [hbit]
     by_cases e : IDX l = IDX f
-    · rw [if_pos e]
+    · rw [ite_eq_left e]
       cases binary
       · simp [e]
       · simp only [true_and, e, ite_true, Bool.true_or]
         have : (s.abits (IDX f) ||| ABits.binary) &&& ABits.binary = 2 := by unfold ABits.binary; bv_k
         rw [this]; decide
-    · rw [if_neg e, if_neg (fun h => e h.1)]
+    · rw [ite_eq_right e, ite_eq_right (fun h => e h.1)]
   · rw [hbit]
     split
     · rename_i hc
@@ -471,13 +471,13 @@ theorem RS.mono {w : Solver} {start : Ref} {s s' : Solver} {rest N N' : List Ref
   rw [he.1, he.2]
   split
   · rename_i hc
-    rw [if_pos hc] at h
+    rw [ite_eq_left hc] at h
     rcases h with h | ⟨h1, n, hn, h2, h3⟩ | ⟨h1, h2, h3, h4⟩
     · exact Or.inl h
     · exact Or.inr (Or.inl ⟨h1, n, (hN n hn).1, h2, by rw [(hN n hn).2, h3]⟩)
     · exact Or.inr (Or.inr ⟨h1, hB _ _ h2, h3, h4⟩)
   · rename_i hc
-    rw [if_neg hc] at h; exact h
+    rw [ite_eq_right hc] at h; exact h
 
 /-- The new reason of the literal `f` forced by the clause at `src`. -/
 def NewR (w : Solver) (src : Ref) (s : Solver) (N : List Ref) (f : Lit) : Prop :=
@@ -501,7 +501,7 @@ theorem rs_after {w : Solver} {start : Ref} {Q : List Ref} {s s' : Solver} {st :
     · subst e
       obtain ⟨k1, k2, k3⟩ := forced_reason hp hI ht hl hfr hfb
       unfold RS
-      rw [if_pos ⟨k2, by rw [k1]; exact src_ne_decision hp hI, by rw [k1]; exact k3⟩, k1]
+      rw [ite_eq_left ⟨k2, by rw [k1]; exact src_ne_decision hp hI, by rw [k1]; exact k3⟩, k1]
       exact Or.inr hnew
     · apply (hR.drop _).mono (he l ht e) hN hB
       intro hc e2
@@ -719,14 +719,14 @@ theorem sweepBinary_shape (s : Solver) (dst src : Ref) (L : SweepLits) :
     f2.trans h1.2.2.1, f3.trans h1.2.2.2.2.1, watchBinary_watches h1.2.2.2.1 _ _, f4.trans h1.2.2.2.2.2, ?_⟩
   have hra : (s1.watchBinary L.mfirst L.msecond).arena.reason dst = s.arena.reason dst := by rw [f1, h1.2.1]
   by_cases hr : s.arena.reason dst = true
-  · rw [if_pos (hra.trans hr)]
+  · rw [ite_eq_left (hra.trans hr)]
     by_cases hg : ((s1.watchBinary L.mfirst L.msecond).reasonMoves L.forced src && L.other != INVALID_LIT) = true
-    · rw [if_pos hg]
+    · rw [ite_eq_left hg]
       simp only [Bool.and_eq_true, bne_iff_ne, ne_eq] at hg
       refine Or.inr (Or.inl ⟨hr, hg.1, hg.2, ?_⟩)
       unfold moveAsg setABit; simp only [ite_true]
-    · rw [if_neg hg]; exact Or.inr (Or.inr rfl)
-  · rw [if_neg (by rw [hra]; exact hr)]; exact Or.inl ⟨by simpa using hr, rfl⟩
+    · rw [ite_eq_right hg]; exact Or.inr (Or.inr rfl)
+  · rw [ite_eq_right (by rw [hra]; exact hr)]; exact Or.inl ⟨by simpa using hr, rfl⟩
 
 /-- The header writes of `sweepLarge`. -/
 def largeArena (a : Arena) (dst : Ref) (newSize : Nat) : Arena :=
@@ -744,14 +744,14 @@ theorem sweepLarge_shape (s : Solver) (dst src : Ref) (newSize : Nat) (L : Sweep
   unfold sweepLarge
   by_cases h3 : newSize < 3
   · left
-    rw [if_pos h3]
+    rw [ite_eq_left h3]
     dsimp only
     split
     · unfold updateLargeReasonFrom; split
       · unfold updateLargeReason; dsimp only; split <;> rfl
       · rfl
     · rfl
-  · rw [if_neg h3]
+  · rw [ite_eq_right h3]
     dsimp only
     right
     refine And.intro (by omega) (And.intro ?_ ?_)
@@ -761,19 +761,19 @@ theorem sweepLarge_shape (s : Solver) (dst src : Ref) (newSize : Nat) (L : Sweep
       generalize ((s.arena.setSize dst (UInt32.ofNat newSize)).setShrunken dst false).setSearched dst 2 = A1
       have hrm : ({ s with arena := A1 } : Solver).reasonMoves L.forced src = s.reasonMoves L.forced src := rfl
       by_cases hr : A1.reason dst = true
-      · rw [if_pos hr]
+      · rw [ite_eq_left hr]
         unfold updateLargeReasonFrom
         rw [hrm]
         by_cases hg : s.reasonMoves L.forced src = true
-        · rw [if_pos hg]
+        · rw [ite_eq_left hg]
           refine Or.inl (Or.inr ⟨hr, hg, ?_⟩)
           unfold updateLargeReason moveAsg
           have hri : ({ s with arena := A1 } : Solver).reasonIdx (IDX L.forced) = s.reasonIdx (IDX L.forced) := rfl
           dsimp only
           rw [hri]
           split <;> rfl
-        · rw [if_neg hg]; exact Or.inr rfl
-      · rw [if_neg hr]
+        · rw [ite_eq_right hg]; exact Or.inr rfl
+      · rw [ite_eq_right hr]
         exact Or.inl (Or.inl ⟨by simpa using hr, rfl⟩)
 
 theorem largeArena_reads (a : Arena) (dst : Ref) (ns : Nat) (h : 4 * dst.toNat + 2 < a.words.size) :
@@ -832,7 +832,7 @@ theorem moveAsg_frame (s : Solver) (f : Lit) (y : UInt32) (b : Bool) :
   unfold moveAsg; split <;> rfl
 
 theorem moveAsg_abit {s t : Solver} {f : Lit} {y : UInt32} {binary : Bool} (h : t.asg = moveAsg s f y binary)
-    (hfb : (IDX f).toNat < s.asg.aBits.size) (i : UInt32) (b : UInt8) (hb : AnaBit b) : t.abit i b = s.abit i b := by
+    (_hfb : (IDX f).toNat < s.asg.aBits.size) (i : UInt32) (b : UInt8) (hb : AnaBit b) : t.abit i b = s.abit i b := by
   unfold abit abits
   rw [h]; unfold moveAsg
   cases binary
@@ -877,8 +877,8 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
   obtain ⟨hlt, hsh, hnext, hrest, e0, e2, en⟩ := hI.head
   unfold sweepClause
   by_cases hg : s.arena.garbage src = true
-  · rw [if_pos hg]; exact Or.inr ⟨N, sweep_garbage hp hI hg⟩
-  rw [if_neg hg]
+  · rw [ite_eq_left hg]; exact Or.inr ⟨N, sweep_garbage hp hI hg⟩
+  rw [ite_eq_right hg]
   dsimp only
   have hgA : w.arena.garbage src = false := by
     unfold garbage at *; rw [← flag_eq_of_word0 e0]; simpa using hg
@@ -926,7 +926,7 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
       intro hr l ht hl hb hd hs e
       have := hp.rb l ht hl hb hd hs; rw [e, hr] at this; simp at this
     by_cases h2 : (filt w src).length = 2
-    · rw [if_pos (by simp [h2])]
+    · rw [ite_eq_left (by simp [h2])]
       obtain ⟨x, y, hK⟩ : ∃ x y, filt w src = [x, y] := by
         match hf : filt w src, h2 with
         | [x, y], _ => exact ⟨x, y, rfl⟩
@@ -989,9 +989,9 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
             (f := L.forced) (y := L.other) (binary := true) rfl hbB i b hb]
           unfold abit abits; rw [hasc]
         · have hidx := idx_ne_of_true hp.core hl hft hne
-          rw [(hmr l).1, (hmr l).2.1, if_neg hidx, if_neg hidx]; exact hscR l
-        · rw [(hmr _).2.1, if_pos rfl]; rfl
-        · rw [(hmr _).1, if_pos rfl]
+          rw [(hmr l).1, (hmr l).2.1, ite_eq_right hidx, ite_eq_right hidx]; exact hscR l
+        · rw [(hmr _).2.1, ite_eq_left rfl]; rfl
+        · rw [(hmr _).1, ite_eq_left rfl]
           apply hBW
           simp at hfK hoK
           rcases hfK with h1 | h1 <;> rcases hoK with h2 | h2
@@ -999,10 +999,10 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
           · exact Or.inl ⟨h1, h2⟩
           · exact Or.inr ⟨h1, h2⟩
           · exact absurd (h1.trans h2.symm) hfo
-        · rw [(hmr _).1, if_pos rfl]; exact filt_sub (by rw [hK]; exact hoK)
-        · rw [(hmr _).1, if_pos rfl]; exact Ne.symm hfo
+        · rw [(hmr _).1, ite_eq_left rfl]; exact filt_sub (by rw [hK]; exact hoK)
+        · rw [(hmr _).1, ite_eq_left rfl]; exact Ne.symm hfo
       · exact Or.inl (by rw [e])
-    · rw [if_neg (by simp [h2])]
+    · rw [ite_eq_right (by simp [h2])]
       have hvars : s.vars = w.vars := by have := congrArg Solver.vars hI.frame; exact this
       obtain ⟨a0, a1, a2, a3, a4⟩ := q4
       have hdq : 4 * st.dst.toNat + 2 < L.words.size := by
@@ -1087,16 +1087,16 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
             R1.reasonOf L.forced = st.dst ∧ R1.binOf L.forced = false ∧
             (∀ l, IDX l ≠ IDX L.forced → R1.reasonOf l = s.reasonOf l ∧ R1.binOf l = s.binOf l) := by
           by_cases hif : (({ s with arena := ⟨L.words⟩ } : Solver).reasonIdx (IDX L.forced) != st.dst) = true
-          · rw [if_pos hif] at e
+          · rw [ite_eq_left hif] at e
             have hR1 : R1.asg = moveAsg ({ s with arena := ⟨L.words⟩ } : Solver) L.forced st.dst false := by rw [e]
             have hmr := moveAsg_reads (f := L.forced) (y := st.dst) (binary := false) hR1 hbR hbB
             refine ⟨?_, (hmr L.forced).2.2.2.1, (hmr L.forced).2.2.2.2, fun i b hb => ?_, ?_, ?_, fun l hl => ?_⟩
             · rw [hR1]; exact asg_frame_trans (moveAsg_frame _ _ _ _) hI.asg
             · exact moveAsg_abit hR1 hbB i b hb
-            · rw [(hmr _).1, if_pos rfl]
-            · rw [(hmr _).2.1, if_pos rfl]; exact hfb
-            · rw [(hmr l).1, (hmr l).2.1, if_neg hl, if_neg hl]; exact ⟨rfl, rfl⟩
-          · rw [if_neg hif] at e
+            · rw [(hmr _).1, ite_eq_left rfl]
+            · rw [(hmr _).2.1, ite_eq_left rfl]; exact hfb
+            · rw [(hmr l).1, (hmr l).2.1, ite_eq_right hl, ite_eq_right hl]; exact ⟨rfl, rfl⟩
+          · rw [ite_eq_right hif] at e
             have hR1 : R1.asg = s.asg := by rw [e]
             have hrd : s.reasonIdx (IDX L.forced) = st.dst := by
               have := hif; simp only [bne_iff_ne, ne_eq, Decidable.not_not] at this; exact this
@@ -1195,13 +1195,13 @@ theorem sweepLoop_spec {w : Solver} {start : Ref} {Q : List Ref} (hp : SwPre w s
     cases rest with
     | nil =>
       have hsrc : src.toNat = w.arena.sizeWards := hI.lrest
-      rw [if_pos (by rw [ge_iff_le, UInt32.le_iff_toNat_le, hE]; omega)]
+      rw [ite_eq_left (by rw [ge_iff_le, UInt32.le_iff_toNat_le, hE]; omega)]
       have hq : D = Q := by have := hI.qsplit; simp at this; exact this.symm
       subst hq
       right; exact ⟨src, N, hI⟩
     | cons x rest' =>
       obtain ⟨rfl, hlt, _⟩ := hI.lrest
-      rw [if_neg (by rw [ge_iff_le, UInt32.le_iff_toNat_le, hE]; omega)]
+      rw [ite_eq_right (by rw [ge_iff_le, UInt32.le_iff_toNat_le, hE]; omega)]
       dsimp only
       obtain ⟨_, _, _, _, _, _, en⟩ := hI.head
       rw [en]
@@ -1319,7 +1319,7 @@ theorem sweep_spec {w : Solver} {start : Ref} {Q : List Ref} (hp : SwPre w start
   have tsz : t.arena.words.size = 4 * st.dst.toNat := by rw [tA, U32Vec.size_shrink]; omega
   have tsw : t.arena.sizeWards = st.dst.toNat := by unfold Arena.sizeWards; rw [tsz]; omega
   have tEq : EqOn t.arena r1.arena 0 (4 * st.dst.toNat) := by
-    intro j _ hj; rw [tA, U32Vec.get!_shrink, if_pos hj]
+    intro j _ hj; rw [tA, U32Vec.get!_shrink, ite_eq_left hj]
   have tasg : t.asg = r1.asg := by rw [← ht]; exact f2
   have twat : t.watches = r1.watches := by rw [← ht]; exact f3
   have tfr : stripT t = stripT w := by

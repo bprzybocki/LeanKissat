@@ -126,9 +126,9 @@ theorem sweepLits_spec (s : Solver) (srcBase n : Nat) (f : Nat → Lit) (hf : �
     intro K hw hq hin hsz hacc
     have hli : L.words.get! (srcBase + i) = f i := hw i (Nat.le_refl _) hi
     have hrf' : s.rootF (f i) = true := by rw [← hli]; exact hrf
-    rw [sweepLits, if_pos hi]; dsimp only; rw [hli, if_pos hrf']
+    rw [sweepLits, ite_eq_left hi]; dsimp only; rw [hli, ite_eq_left hrf']
     obtain ⟨a1, a2, a3, a4, a5, a6⟩ := ih K (fun k h1 h2 => hw k (by omega) h2) (by omega) (by omega) hsz hacc
-    rw [range'_succ_eq i n hi, List.map_cons, List.filter_cons, if_neg (by simp [hrf'])]
+    rw [range'_succ_eq i n hi, List.map_cons, List.filter_cons, ite_eq_right (by simp [hrf'])]
     refine ⟨a1, a2, a3, a4, fun e => ?_, fun e => ?_⟩
     · obtain ⟨x, hx, hxt⟩ := a5 e; exact ⟨x, List.mem_cons_of_mem _ hx, hxt⟩
     · obtain ⟨b1, b2, b3, b4⟩ := a6 e
@@ -141,7 +141,7 @@ theorem sweepLits_spec (s : Solver) (srcBase n : Nat) (f : Nat → Lit) (hf : �
     have hli : L.words.get! (srcBase + i) = f i := hw i (Nat.le_refl _) hi
     have hrf' : ¬ s.rootF (f i) = true := by rw [← hli]; exact hrf
     have hrt' : s.rootT (f i) = true := by rw [← hli]; exact hrt
-    rw [sweepLits, if_pos hi]; dsimp only; rw [hli, if_neg hrf', if_pos hrt']
+    rw [sweepLits, ite_eq_left hi]; dsimp only; rw [hli, ite_eq_right hrf', ite_eq_left hrt']
     refine ⟨rfl, Nat.le_refl _, show L.qpos ≤ srcBase + n by omega, fun _ _ => rfl, fun _ => ?_,
       fun e => by simp at e⟩
     exact ⟨f i, by rw [range'_succ_eq i n hi]; simp, hrt'⟩
@@ -150,7 +150,7 @@ theorem sweepLits_spec (s : Solver) (srcBase n : Nat) (f : Nat → Lit) (hf : �
     have hli : L.words.get! (srcBase + i) = f i := hw i (Nat.le_refl _) hi
     have hrf' : ¬ s.rootF (f i) = true := by rw [← hli]; exact hrf
     have hrt' : ¬ s.rootT (f i) = true := by rw [← hli]; exact hrt
-    rw [sweepLits, if_pos hi]; dsimp only; rw [hli, if_neg hrf', if_neg hrt']
+    rw [sweepLits, ite_eq_left hi]; dsimp only; rw [hli, ite_eq_right hrf', ite_eq_right hrt']
     simp only [tmp, lit, hli] at ih
     obtain ⟨kw, kq⟩ := keep_words L (s.value (f i)) (f i)
     have hacc' := hacc.step (f i) (hf i hi)
@@ -163,7 +163,7 @@ theorem sweepLits_spec (s : Solver) (srcBase n : Nat) (f : Nat → Lit) (hf : �
     have p3 : srcBase + n ≤ (L.keep (s.value (f i)) (f i)).words.size := by rw [kw, U32Vec.size_set!]; exact hsz
     obtain ⟨a1, a2, a3, a4, a5, a6⟩ := ih (K ++ [f i]) p1 p2 (by omega) p3 hacc'
     rw [kw] at a1; rw [kq] at a2; rw [kw, kq] at a4; rw [kq] at a6
-    rw [range'_succ_eq i n hi, List.map_cons, List.filter_cons, if_pos (by simpa using hrf')]
+    rw [range'_succ_eq i n hi, List.map_cons, List.filter_cons, ite_eq_left (by simpa using hrf')]
     have hqs : L.qpos < L.words.size := by omega
     refine ⟨by rw [a1]; simp, by omega, a3, fun j hj => ?_, fun e => ?_, fun e => ?_⟩
     · rw [a4 j (by omega), U32Vec.get!_set!_ne _ _ _ _ (by omega)]
@@ -184,7 +184,7 @@ theorem sweepLits_spec (s : Solver) (srcBase n : Nat) (f : Nat → Lit) (hf : �
           simp
   | case4 L i hi =>
     intro K hw hq hin hsz hacc
-    rw [sweepLits, if_neg hi]
+    rw [sweepLits, ite_eq_right hi]
     have e : n - i = 0 := by omega
     rw [e]
     refine ⟨rfl, Nat.le_refl _, show L.qpos ≤ srcBase + n by omega, fun _ _ => rfl, fun h => by simp at h,

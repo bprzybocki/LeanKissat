@@ -304,7 +304,7 @@ theorem conflict_move {Φ : (Nat → Bool) → Prop} {s t : Solver} {c : CRef} {
               · simp [getElem_litsL]
               · simp [getElem_litsL]
               · simp only [List.getElem_cons, List.getElem_drop]
-                rw [dif_neg (by omega), dif_neg (by omega)]
+                rw [dite_eq_right (by omega), dite_eq_right (by omega)]
                 congr 1; omega
             intro w0 w1 rest he k0' k1' hp0 _
             rw [hdx, hcl2] at he

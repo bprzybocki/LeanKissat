@@ -103,7 +103,7 @@ def importLiteralAux (s : Solver) (elit : Int) (extension : Bool) : Lit × Solve
 
 /-- Import all external variables `other .. eidx` in order (tumble = 0 path). -/
 def importUpTo (s : Solver) (other eidx : Nat) (ilit : Lit) : Lit × Solver :=
-  if h : other ≤ eidx then
+  if _h : other ≤ eidx then
     let (ilit, s) := s.importLiteralAux other false
     importUpTo s (other + 1) eidx ilit
   else (ilit, s)

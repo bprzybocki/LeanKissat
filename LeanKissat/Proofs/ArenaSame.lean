@@ -124,15 +124,15 @@ theorem setWord0_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0
     · subst e; rfl
     · simp [e]
   have hsize : ∀ x ∈ a.chain 0 a.sizeWards, (a.setWord0 r w).size x = a.size x := by
-    intro x hx; unfold size; rw [hget, if_neg (fun e => (header_ne h hr hx).2.1 e.1)]
+    intro x hx; unfold size; rw [hget, ite_eq_right (fun e => (header_ne h hr hx).2.1 e.1)]
   have hshr : ∀ x ∈ a.chain 0 a.sizeWards, (a.setWord0 r w).shrunken x = a.shrunken x := by
     intro x hx
     by_cases e : r = x
     · subst e; exact flag_of_key (by
         unfold word0; rw [hget]; by_cases hb : base r < a.words.size
-        · rw [if_pos ⟨rfl, hb⟩]; exact hw
-        · rw [if_neg (fun e => hb e.2)]) (Or.inr (Or.inr rfl))
-    · unfold shrunken flag word0; rw [hget, if_neg (fun e' => (header_ne h hr hx).2.2.2 e e'.1)]
+        · rw [ite_eq_left ⟨rfl, hb⟩]; exact hw
+        · rw [ite_eq_right (fun e => hb e.2)]) (Or.inr (Or.inr rfl))
+    · unfold shrunken flag word0; rw [hget, ite_eq_right (fun e' => (header_ne h hr hx).2.2.2 e e'.1)]
   have hch : (a.setWord0 r w).chain 0 (a.setWord0 r w).sizeWards = a.chain 0 a.sizeWards := by
     rw [hsw]; symm
     apply chain_congr' hsw.symm _ 0
@@ -144,14 +144,14 @@ theorem setWord0_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0
     unfold litsL; rw [hsize x hx]
     apply List.map_congr_left; intro k hk
     simp at hk
-    unfold lit; rw [hget, if_neg (fun e => (header_ne h hr hx).2.2.1 k hk e.1)]
-  · intro x hx; unfold searched; rw [hget, if_neg (fun e => (header_ne h hr hx).1 e.1)]
+    unfold lit; rw [hget, ite_eq_right (fun e => (header_ne h hr hx).2.2.1 k hk e.1)]
+  · intro x hx; unfold searched; rw [hget, ite_eq_right (fun e => (header_ne h hr hx).1 e.1)]
   · intro x hx
     by_cases e : r = x
     · subst e; unfold word0; rw [hget]; by_cases hb : base r < a.words.size
-      · rw [if_pos ⟨rfl, hb⟩]; exact hw
-      · rw [if_neg (fun e => hb e.2)]
-    · unfold word0; rw [hget, if_neg (fun e' => (header_ne h hr hx).2.2.2 e e'.1)]
+      · rw [ite_eq_left ⟨rfl, hb⟩]; exact hw
+      · rw [ite_eq_right (fun e => hb e.2)]
+    · unfold word0; rw [hget, ite_eq_right (fun e' => (header_ne h hr hx).2.2.2 e e'.1)]
 
 theorem setGlue_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 a.sizeWards) (g : UInt32) :
     Same a (a.setGlue r g) :=

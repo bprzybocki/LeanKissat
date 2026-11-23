@@ -16,7 +16,7 @@ theorem ByteArray.set!_eq_set (a : ByteArray) (i : Nat) (v : UInt8) (h : i < a.s
   | mk data =>
     have h' : i < data.size := h
     simp only [ByteArray.set!, ByteArray.set, Array.set!_eq_setIfInBounds, Array.setIfInBounds]
-    rw [dif_pos h']
+    rw [dite_eq_left h']
 
 @[simp] theorem ByteArray.size_set!' (a : ByteArray) (i : Nat) (v : UInt8) :
     (a.set! i v).size = a.size := by
@@ -60,12 +60,12 @@ theorem get!_set! (a : U32Vec) (i : Nat) (v : UInt32) (j : Nat) :
     (a.set! i v).get! j = if i = j ∧ j < a.size then v else a.get! j := by
   by_cases hj : j < a.size
   · have hj2 : j < (a.set! i v).size := by simpa using hj
-    rw [get!_eq, dif_pos hj2, getElem_set!, get!_eq, dif_pos hj]
+    rw [get!_eq, dite_eq_left hj2, getElem_set!, get!_eq, dite_eq_left hj]
     by_cases hij : i = j
     · simp only [hij, true_and, hj, ite_true]
     · simp only [hij, false_and, ite_false]; rfl
   · have hj2 : ¬ j < (a.set! i v).size := by simpa using hj
-    rw [get!_eq, dif_neg hj2, get!_eq, dif_neg hj]
+    rw [get!_eq, dite_eq_right hj2, get!_eq, dite_eq_right hj]
     simp only [hj, and_false, ite_false]
 
 @[simp] theorem get!_set!_self (a : U32Vec) (i : Nat) (v : UInt32) (h : i < a.size) :
@@ -113,7 +113,7 @@ theorem get!_set! (a : WVec) (i : Nat) (v : UInt32) (j : Nat) :
   by_cases hij : i = j
   · subst hij
     by_cases h : i < a.data.size
-    · simp [h, Array.getElem!_set!_self]
+    · simp [h]
     · simp only [h, and_false, ite_false]
       simp [Array.set!_eq_setIfInBounds, Array.setIfInBounds, h]
   · simp only [hij, false_and, ite_false]
@@ -129,7 +129,7 @@ theorem get!_push (a : WVec) (v : UInt32) (j : Nat) :
   · by_cases he : j = a.data.size
     · simp [he]
     · have : a.data[j]? = none := by simp; omega
-      simp [hj, he, this]
+      simp [hj, he]
 
 end WVec
 end LeanKissat
@@ -148,8 +148,8 @@ theorem getElem_view (a : U32Vec) (i : Nat) (h : i < a.view.length) :
 theorem get!_eq_view (a : U32Vec) (i : Nat) : a.get! i = a.view.getD i 0 := by
   rw [get!_eq, List.getD_eq_getElem?_getD]
   by_cases h : i < a.size
-  · rw [dif_pos h, List.getElem?_eq_getElem (by simpa using h), Option.getD_some, getElem_view]
-  · rw [dif_neg h, List.getElem?_eq_none (by simp; omega)]; rfl
+  · rw [dite_eq_left h, List.getElem?_eq_getElem (by simpa using h), Option.getD_some, getElem_view]
+  · rw [dite_eq_right h, List.getElem?_eq_none (by simp; omega)]; rfl
 
 theorem get!_mem_view (v : U32Vec) (q : Nat) (hq : q < v.size) : v.get! q ∈ v.view := by
   rw [get!_eq_view, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (by simpa using hq),
@@ -171,8 +171,8 @@ theorem view_push (a : U32Vec) (v : UInt32) : (a.push v).view = a.view ++ [v] :=
   intro i h1 h2
   rw [getElem_view, getElem_push]
   by_cases hi : i < a.size
-  · rw [dif_pos hi, List.getElem_append_left (by simpa using hi), getElem_view]
-  · rw [dif_neg hi]
+  · rw [dite_eq_left hi, List.getElem_append_left (by simpa using hi), getElem_view]
+  · rw [dite_eq_right hi]
     have : i = a.size := by simp at h1; omega
     subst this
     simp
@@ -222,7 +222,7 @@ theorem ByteArray.get!_set! (b : ByteArray) (i : Nat) (v : UInt8) (j : Nat) :
     by_cases hij : i = j
     · subst hij
       by_cases h : i < data.size
-      · simp [h, Array.getElem!_set!_self]
+      · simp [h]
       · simp only [h, and_false, ite_false]
         simp [Array.set!_eq_setIfInBounds, Array.setIfInBounds, h]
     · simp only [hij, false_and, ite_false]

@@ -59,7 +59,7 @@ theorem RunInv.keep {s0 : Solver} {i : Nat} {n : Lit} {st : PS} {d : List WEntry
 
 /-- Record a conflict (assignment and arena unchanged). -/
 theorem RunInv.conflict' {s0 : Solver} {i : Nat} {n : Lit} {st : PS} {d : List WEntry}
-    (h : RunInv s0 i n st d) (hr0 : st.res = none) (e : WEntry) (st' : PS) (c : CRef)
+    (h : RunInv s0 i n st d) (_hr0 : st.res = none) (e : WEntry) (st' : PS) (c : CRef)
     (ha : st'.a = st.a) (har : st'.arena = st.arena) (hr : st'.res = some c)
     (hc : ConflictOK (V s0 st) st'.s c) : RunInv s0 i n st' (d ++ [e]) := by
   have hV : V s0 st' = V s0 st := by simp [V, ha, har]
@@ -177,14 +177,14 @@ theorem step_bin {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : List
   unfold PS.step
   simp only
   by_cases h1 : vTrue (st.a.values.get! b.toNat) = true
-  · rw [if_pos h1]
+  · rw [ite_eq_left h1]
     exact H.run.keep H.res _ _ rfl rfl H.res ((isTrue_iff_vTrue _ _).mpr h1)
-  rw [if_neg h1]
+  rw [ite_eq_right h1]
   by_cases h2 : vFalse (st.a.values.get! b.toNat) = true
-  · rw [if_pos h2]
+  · rw [ite_eq_left h2]
     exact H.run.conflict' H.res _ _ .binConflict rfl rfl rfl
       ⟨hbw, H.notLitFalse, (isFalse_iff_vFalse _ _).mpr h2⟩
-  rw [if_neg h2]
+  rw [ite_eq_right h2]
   have hun : ¬ (V s0 st).IsTrue b ∧ ¬ (V s0 st).IsFalse b :=
     ⟨fun h => h1 ((isTrue_iff_vTrue _ _).mp h), fun h => h2 ((isFalse_iff_vFalse _ _).mp h)⟩
   refine RunInv.congr (st := { st with a := st.a.assign probing lv true b _ })
@@ -324,9 +324,9 @@ theorem replaced_watches {a : Arena} (h : a.Layout) {x0 : Ref} (hx0 : x0 ∈ a.c
     rw [length_litsL, hsz]
   constructor
   · rw [← getElem_litsL _ _ _ (by omega : 0 < ((a.replaceArena x0 R other notLit).litsL x0).length)]
-    simp [hL, List.getElem_set, show ¬ R = 0 by omega, show ¬ 0 = R by omega]
+    simp [hL, show ¬ R = 0 by omega]
   · rw [← getElem_litsL _ _ _ (by omega : 1 < ((a.replaceArena x0 R other notLit).litsL x0).length)]
-    simp [hL, List.getElem_set, show ¬ R = 1 by omega, show ¬ 1 = R by omega]
+    simp [hL, show ¬ R = 1 by omega]
 
 theorem RunInv.lit_eq {s0 : Solver} {i : Nat} {n : Lit} {st : PS} {d : List WEntry}
     (h : RunInv s0 i n st d) (hws : s0.WatchStruct) {r : Ref} (hl : s0.LiveRef r)
@@ -533,24 +533,24 @@ theorem step_large {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : Li
   unfold PS.step
   simp only
   by_cases hbt : vTrue (st.a.values.get! b.toNat) = true
-  · rw [if_pos hbt]
+  · rw [ite_eq_left hbt]
     refine H.run.keep H.res _ _ rfl rfl H.res ?_
     intro hl
     have F := H.largeFacts hl.2
     have ht := (isTrue_iff_vTrue (V s0 st) b).mpr hbt
     right; exact ⟨b, F.blocking, ht, H.run.lvl_true H.ctx.levelOK ht⟩
-  rw [if_neg hbt]
+  rw [ite_eq_right hbt]
   have hr0 := (H.ctx.ws.refOK _ _ _ H.mem).1
   have hgeq : st.arena.garbage r = s0.arena.garbage r := by
     unfold garbage flag; rw [H.run.arena.word0 r hr0]
   by_cases hg : st.arena.garbage r = true
-  · rw [if_pos hg]
+  · rw [ite_eq_left hg]
     refine H.run.keep H.res _ _ rfl rfl H.res ?_
     intro hl; rw [hgeq, hl.2] at hg; contradiction
-  rw [if_neg hg]
+  rw [ite_eq_right hg]
   have F := H.largeFacts (by rw [← hgeq]; simpa using hg)
   by_cases hot : vTrue (st.a.values.get! (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit).toNat) = true
-  · rw [if_pos hot]
+  · rw [ite_eq_left hot]
     refine H.run.keep H.res _ _ rfl rfl H.res ?_
     intro _
     have ht := (isTrue_iff_vTrue (V s0 st) _).mpr hot
@@ -559,7 +559,7 @@ theorem step_large {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : Li
       · rw [← h]; exact lit_mem_litsL _ _ _ (by have := F.size3; omega)
       · rw [← h]; exact lit_mem_litsL _ _ _ (by have := F.size3; omega)
     right; exact ⟨_, hmem, ht, H.run.lvl_true H.ctx.levelOK ht⟩
-  rw [if_neg hot]
+  rw [ite_eq_right hot]
   have SS := search_spec st.arena st.a.values r _ _ F.searched2 F.searchedLt
   simp only at SS
   generalize (if findReplacement st.arena st.a.values r (st.arena.searched r).toNat
@@ -569,12 +569,12 @@ theorem step_large {s0 : Solver} {i : Nat} {lit : Lit} {st : PS} {done rest : Li
       (st.arena.searched r).toNat then findReplacement st.arena st.a.values r 2 (st.arena.searched r).toNat
     else (st.arena.size r).toNat) = R at SS ⊢
   by_cases hR : R < (st.arena.size r).toNat
-  · rw [if_pos hR]; exact step_replace H F R (SS.1 hR).1 hR (SS.1 hR).2 _
-  rw [if_neg hR]
+  · rw [ite_eq_left hR]; exact step_replace H F R (SS.1 hR).1 hR (SS.1 hR).2 _
+  rw [ite_eq_right hR]
   have hall := SS.2 hR
   by_cases h1 : (st.a.values.get! (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit).toNat != 0) = true
-  · rw [if_pos h1]; exact step_conflict H F hall h1 hot _ rfl rfl rfl
-  · rw [if_neg h1]; exact step_unit H F hall h1 probing _ rfl rfl H.res
+  · rw [ite_eq_left h1]; exact step_conflict H F hall h1 hot _ rfl rfl rfl
+  · rw [ite_eq_right h1]; exact step_unit H F hall h1 probing _ rfl rfl H.res
 
 end Solver
 end LeanKissat

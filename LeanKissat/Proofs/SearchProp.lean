@@ -704,7 +704,7 @@ theorem spTail_side (saved : Nat) (c : Option CRef) (u : Solver) :
     intro v h1 h2 h
     by_cases hl : u.level = 0
     · exact Or.inr hl
-    · rw [if_neg (by simp [h1, hl])] at h; left; rw [← h2]; exact h
+    · rw [ite_eq_right (by simp [h1, hl])] at h; left; rw [← h2]; exact h
   apply key
   · unfold spTail updateConflictsAndTrail
     cases c with

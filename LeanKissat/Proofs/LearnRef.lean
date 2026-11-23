@@ -150,7 +150,7 @@ theorem SInv.valid_false {Φ : (Nat → Bool) → Prop} {s : Solver} (hs : SInv 
   have := hs.rsizes.valid ht
   unfold ValidLit at *; rwa [IDX_NOT] at this
 
-theorem newLargeClause_invalid {s : Solver} (hl : s.arena.Layout) (glue : UInt32) (lits : U32Vec)
+theorem newLargeClause_invalid {s : Solver} (_hl : s.arena.Layout) (glue : UInt32) (lits : U32Vec)
     (h : (s.newLargeClause false true glue lits).1 = INVALID_REF) :
     (s.newLargeClause false true glue lits).2.outOfResources = true := by
   generalize hal : s.arena.allocate true glue lits = R at h
@@ -295,7 +295,7 @@ theorem learnLargeTail_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : Cla
     (s.largeTail (s.clause.get! 0) glue).2.outOfResources = true ∨ LOut Φ s (s.largeTail (s.clause.get! 0) glue).2 := by
   have hnr : s.newRedundantClause glue = s.newLargeClause false true glue s.clause := by
     unfold newRedundantClause newClause
-    rw [if_neg (by simp; omega)]
+    rw [ite_eq_right (by simp; omega)]
   unfold largeTail
   rw [hnr]
   by_cases hinv : (s.newLargeClause false true glue s.clause).1 = INVALID_REF
@@ -304,14 +304,14 @@ theorem learnLargeTail_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : Cla
     generalize s.newLargeClause false true glue s.clause = R at hinv this ⊢
     obtain ⟨ref, t⟩ := R
     simp only at hinv this ⊢
-    rw [if_pos (by simp [hinv])]; exact this
+    rw [ite_eq_left (by simp [hinv])]; exact this
   right
   obtain ⟨n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12⟩ := newLargeClause_spec h.inv h.watching glue s.clause hn
     h.nodup h.valid h.implied hinv
   generalize s.newLargeClause false true glue s.clause = R at hinv n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 ⊢
   obtain ⟨ref, t⟩ := R
   simp only at hinv n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 ⊢
-  rw [if_neg (by simpa using hinv)]
+  rw [ite_eq_right (by simpa using hinv)]
   simp only
   -- the clause buffer is unchanged
   have hcl : t.clause = s.clause := by have := n6; simp only [anaSide, Prod.mk.injEq] at this; exact this.1
@@ -629,7 +629,7 @@ theorem learnBinaryTail_spec {Φ : (Nat → Bool) → Prop} {s : Solver} (h : Cl
   have hvb : s.ValidLit b := h.valid b (by rw [hv]; simp)
   have himp : Implied Φ [a, b] := by rw [← hv]; exact h.implied
   have hnr : s.newRedundantClause 1 = (INVALID_REF, s.newBinaryClauseAux false true a b) := by
-    unfold newRedundantClause newClause; rw [if_pos (by simp [hn])]; rw [ha, hb]
+    unfold newRedundantClause newClause; rw [ite_eq_left (by simp [hn])]; rw [ha, hb]
   unfold learnBinaryTail
   rw [hnr]
   dsimp only
@@ -760,7 +760,7 @@ theorem learnClause_spec {Φ : (Nat → Bool) → Prop} {s : Solver} {P : Nat} (
       else s1.learnReference (s1.clause.get! 0) (UInt32.ofNat s.levels.size)) = R at key ⊢
   obtain ⟨ref, t⟩ := R
   dsimp only at key ⊢
-  rw [if_neg (by simp [hes])]
+  rw [ite_eq_right (by simp [hes])]
   rcases key with k | k | k
   · exact Or.inl k
   · exact Or.inr (Or.inl k)

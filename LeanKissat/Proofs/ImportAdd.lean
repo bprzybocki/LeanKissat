@@ -16,11 +16,11 @@ theorem importLiteral_imported {s : Solver} (hImp : ImportOK s) (ht : s.options.
   obtain ⟨hsz, e1, e2, e3⟩ := hImp l.1 hl
   have hn := natAbs_extLit l
   unfold importLiteral
-  rw [if_neg (by simp [ht]), hn, if_pos hsz]
+  rw [ite_eq_right (by simp [ht]), hn, ite_eq_left hsz]
   unfold importLiteralAux
   rw [hn]
   dsimp only
-  have hA : s.adjustImports (l.1 + 1) = s := by unfold adjustImports; rw [if_pos hsz]
+  have hA : s.adjustImports (l.1 + 1) = s := by unfold adjustImports; rw [ite_eq_left hsz]
   rw [hA]
   have c1 : (s.importBitsAt (l.1 + 1) &&& ImportBits.eliminated != 0) = false := by
     unfold importBitsAt; simp [e3]
@@ -99,7 +99,7 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
   have hne : (extLit l == 0) = false := by unfold extLit; split <;> simp <;> omega
   have hImp : ImportOK s := hb.search.imp.congr eil eib ev
   unfold add
-  rw [if_neg (by simp [hne])]
+  rw [ite_eq_right (by simp [hne])]
   rw [importLiteral_imported hImp (by rw [eo]; exact hb.tumble) l (by rw [ev]; exact hl)]
   dsimp only
   generalize hx : impLit l = x
@@ -124,7 +124,7 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
     unfold fixedValue; dsimp only; rw [hval]
     by_cases hv : base.asg.values.get! x.toNat = 0
     · simp [hv]
-    · rw [if_neg (by simpa using hv)]
+    · rw [ite_eq_right (by simpa using hv)]
       have h0 := hlvl0 hv
       have : s.level' x = 0 := by unfold level'; rw [ea]; unfold lvl at h0; exact UInt32.toNat_inj.mp (by simpa using h0)
       simp [this]
@@ -145,7 +145,7 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
         · exact Or.inr (Or.inr (Or.inl (hcs e)))
         · exact Or.inr (Or.inr (Or.inr (hct e)))
   by_cases hm0 : (s.mark x == 0) = true
-  · rw [if_pos hm0]
+  · rw [ite_eq_left hm0]
     have hm0' : s.marks.get! x.toNat = 0 := by simpa [mark] using hm0
     have hxL : x ∉ s.clause.view := fun hm => by have := (h.m1 x hm).1; rw [hm0'] at this; simp at this
     have hnxL : NOT x ∉ s.clause.view := fun hm => by
@@ -185,18 +185,18 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
           have hynx : y ≠ NOT x := fun e => hnxL (e ▸ hy)
           have hnyx : NOT y ≠ x := fun e => hnxL (by rw [← e, NOT_NOT]; exact hy)
           have hnynx : NOT y ≠ NOT x := fun e => hyx (by rw [← NOT_NOT y, e, NOT_NOT])
-          rw [if_neg (fun e => hynx (toN _ _ e)), if_neg (fun e => hyx (toN _ _ e)),
-            if_neg (fun e => hnynx (toN _ _ e)), if_neg (fun e => hnyx (toN _ _ e))]
+          rw [ite_eq_right (fun e => hynx (toN _ _ e)), ite_eq_right (fun e => hyx (toN _ _ e)),
+            ite_eq_right (fun e => hnynx (toN _ _ e)), ite_eq_right (fun e => hnyx (toN _ _ e))]
           exact h.m1 y hy
         · simp at hy; subst hy
-          rw [if_neg (fun e => hxx (toN _ _ e)), if_pos rfl, if_pos rfl]; exact ⟨rfl, rfl⟩
+          rw [ite_eq_right (fun e => hxx (toN _ _ e)), ite_eq_left rfl, ite_eq_left rfl]; exact ⟨rfl, rfl⟩
       · rw [hmk] at hj
         rw [hview]
         by_cases e1 : j = (NOT x).toNat
         · exact ⟨x, by simp, Or.inr e1⟩
         · by_cases e2 : j = x.toNat
           · exact ⟨x, by simp, Or.inl e2⟩
-          · rw [if_neg e1, if_neg e2] at hj
+          · rw [ite_eq_right e1, ite_eq_right e2] at hj
             obtain ⟨y, hy, hj'⟩ := h.m2 j hj
             exact ⟨y, List.mem_append_left _ hy, hj'⟩
       · obtain ⟨l', hl', hr⟩ := h.sat e; exact ⟨l', List.mem_cons_of_mem _ hl', hr⟩
@@ -225,11 +225,11 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
         (fun e => by obtain ⟨l', hl', hr'⟩ := h.sat e; exact ⟨l', List.mem_cons_of_mem _ hl', hr'⟩)
         (fun e => by obtain ⟨v, h1, h2⟩ := h.triv e; exact ⟨v, List.mem_cons_of_mem _ h1, List.mem_cons_of_mem _ h2⟩)
         (Or.inr (Or.inl (by rw [hx]; exact hr)))
-  · rw [if_neg hm0]
+  · rw [ite_eq_right hm0]
     have hm0' : s.marks.get! x.toNat ≠ 0 := by simpa [mark] using hm0
     obtain ⟨y, hy, hj⟩ := h.m2 _ hm0'
     by_cases hmf : vFalse (s.mark x) = true
-    · rw [if_pos hmf]
+    · rw [ite_eq_left hmf]
       have hmf' : s.marks.get! x.toNat = 0xFF := by simpa [mark, vFalse] using hmf
       -- `x = NOT y` for a literal `y` of the clause
       have hxy : x = NOT y := by
@@ -252,7 +252,7 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
           · exact List.mem_cons.mpr (Or.inl (by rw [← hb2]))
           · exact List.mem_cons_of_mem _ (by rw [hll, hb2] at hl'; exact hl')⟩)
         (Or.inr (Or.inr (Or.inr rfl)))
-    · rw [if_neg hmf]
+    · rw [ite_eq_right hmf]
       have hxy : x = y := by
         rcases hj with e | e
         · exact toN _ _ e
@@ -307,7 +307,7 @@ theorem clearClauseMarks_zero : ∀ (s : Solver) (i : Nat),
         · exact absurd e n2
         · exact absurd e n1
       · exact ⟨k, by omega, k2, k3⟩)
-    exact ⟨M, by rw [e1], by rw [e2]; simp [ByteArray.size_set!'], e3⟩
+    exact ⟨M, by rw [e1], by rw [e2]; simp, e3⟩
   | case2 s i hi =>
     intro h
     refine ⟨s.marks, rfl, rfl, fun j => ?_⟩
@@ -319,7 +319,7 @@ theorem activateLiterals_noop (s : Solver) (L : List Lit) (h : ∀ x ∈ L, s.is
   | nil => rfl
   | cons x xs ih =>
     have hx : s.activateLiteral x = s := by
-      unfold activateLiteral; dsimp only; rw [if_pos (h x (List.mem_cons_self ..))]
+      unfold activateLiteral; dsimp only; rw [ite_eq_left (h x (List.mem_cons_self ..))]
     simp only [List.foldl_cons, hx]
     exact ih (fun y hy => h y (List.mem_cons_of_mem _ hy))
 
@@ -504,7 +504,7 @@ theorem body_unit {F : CNF Nat} {base s : Solver} {c : CNF.Clause Nat} (hb : Imp
   obtain ⟨a1, a2, a3, a4⟩ := assign_sinv hs (probing := s.probing) (k := 0) (bb := false) (rr := UNIT_REASON)
     hxv' hun (by simp) (fun h0 => absurd rfl h0) (fun _ => himp)
   have hlev : (s.assign s.probing 0 false x UNIT_REASON).level = 0 := by rw [a3.level]; show s.level = 0; rw [hS.level, hb.level]
-  rw [if_pos (by simp [hlev])]
+  rw [ite_eq_left (by simp [hlev])]
   have hsinvS : ∀ d, s.InDB d → s.InvS d := fun d hd => by
     unfold InvS; rw [hS.invSAt, hS.propagate]; exact hb.search.invS d ((hS.inDB d).mp hd)
   have hasg : (s.assign s.probing 0 false x UNIT_REASON).asg = s.asg.assign s.probing 0 false x UNIT_REASON := by
@@ -522,7 +522,7 @@ theorem body_unit {F : CNF Nat} {base s : Solver} {c : CNF.Clause Nat} (hb : Imp
   have hLx : (s.assign s.probing 0 false x UNIT_REASON).lvl x = 0 := by
     have := assign_lvl (s := s) (probing := s.probing) (level := 0) (binary := false) (reason := UNIT_REASON)
       hs.core.sizes hxv' x
-    rw [if_pos rfl] at this
+    rw [ite_eq_left rfl] at this
     show ((s.assign s.probing 0 false x UNIT_REASON).asg.aLevel.get! (IDX x).toNat).toNat = 0
     rw [hasg]; exact this
   apply body_propagate a1
@@ -640,19 +640,19 @@ theorem addClauseBody_spec {F : CNF Nat} {base s : Solver} {c : CNF.Clause Nat} 
   have hS := h.same
   obtain ⟨ef, eo, eoor, enp, ei⟩ := h.flags
   unfold addClauseBody
-  rw [if_neg (by rw [ei, hb.incons]; simp)]
-  rw [if_neg (by intro hf; apply hb.flags; unfold Flagged; rw [← eo, ← eoor, ← enp]; simpa [or_assoc] using hf)]
+  rw [ite_eq_right (by rw [ei, hb.incons]; simp)]
+  rw [ite_eq_right (by intro hf; apply hb.flags; unfold Flagged; rw [← eo, ← eoor, ← enp]; simpa [or_assoc] using hf)]
   by_cases hsat : s.clauseSatisfied = true
-  · rw [if_pos hsat]
+  · rw [ite_eq_left hsat]
     obtain ⟨l, hl, hr⟩ := h.sat hsat
     refine ⟨rfl, rfl, Or.inr (Or.inr (h.good hb c (Or.inr (Or.inl ⟨l, List.mem_reverse.mp hl, ?_⟩))))⟩
     unfold RootTrue IsTrue lvl at *; rw [hS.asg]; exact hr
-  rw [if_neg hsat]
+  rw [ite_eq_right hsat]
   by_cases htr : s.clauseTrivial = true
-  · rw [if_pos htr]
+  · rw [ite_eq_left htr]
     obtain ⟨v, h1, h2⟩ := h.triv htr
     exact ⟨rfl, rfl, Or.inr (Or.inr (h.good hb c (Or.inl ⟨v, List.mem_reverse.mp h1, List.mem_reverse.mp h2⟩)))⟩
-  rw [if_neg htr]
+  rw [ite_eq_right htr]
   have hns : s.clauseSatisfied = false ∧ s.clauseTrivial = false := by simp_all
   have hcore := hb.search.inv.core
   have hsm := hb.search.inv.ws.varsBound
@@ -676,17 +676,17 @@ theorem addClauseBody_spec {F : CNF Nat} {base s : Solver} {c : CNF.Clause Nat} 
   dsimp only
   have himp := h.implied hb hcF hns
   by_cases h0 : s.clause.size = 0
-  · rw [if_pos (by simp [h0])]
+  · rw [ite_eq_left (by simp [h0])]
     refine ⟨rfl, rfl, Or.inl ⟨rfl, ?_⟩⟩
     rintro ⟨β, hβ⟩
     have hv : s.clause.view = [] := by apply List.eq_nil_of_length_eq_zero; simp [h0]
     obtain ⟨x, hx, _⟩ := himp β hβ
     rw [hv] at hx; simp at hx
-  rw [if_neg (by simpa using h0)]
+  rw [ite_eq_right (by simpa using h0)]
   by_cases h1 : s.clause.size = 1
-  · rw [if_pos (by simp [h1])]
+  · rw [ite_eq_left (by simp [h1])]
     exact body_unit hb hcF h hns h1
-  rw [if_neg (by simpa using h1)]
+  rw [ite_eq_right (by simpa using h1)]
   have h2 : 2 ≤ s.clause.size := by omega
   -- the clause literals: valid, unassigned, distinct
   have hmem : ∀ i, i < s.clause.size → s.clause.get! i ∈ s.clause.view := fun i hi => U32Vec.get!_mem_view _ _ hi
@@ -881,7 +881,7 @@ theorem addClause_spec {F : CNF Nat} {base : Solver} {c : CNF.Clause Nat} (hb : 
   simp only [List.append_nil] at hP
   have e : ((c.literals.foldl (fun s l => s.add (extLit l)) base).add 0) =
       (c.literals.foldl (fun s l => s.add (extLit l)) base).addClauseEnd := by
-    unfold add; rw [if_pos (by rfl)]
+    unfold add; rw [ite_eq_left (by rfl)]
   rw [e]
   exact addClauseEnd_spec hb hcF hP
 
@@ -932,10 +932,10 @@ theorem importUpTo_kf (e : Nat) : ∀ (k o : Nat) (s : Solver) (l : Lit), e + 1 
   induction k with
   | zero =>
     intro o s l hk
-    rw [importUpTo, dif_neg (by omega)]; exact KF.refl _
+    rw [importUpTo, dite_eq_right (by omega)]; exact KF.refl _
   | succ k ih =>
     intro o s l hk
-    rw [importUpTo, dif_pos (by omega)]
+    rw [importUpTo, dite_eq_left (by omega)]
     dsimp only
     exact (ih (o + 1) _ _ (by omega)).trans (importLiteralAux_kf _ _ _)
 
@@ -971,10 +971,10 @@ theorem add_bad (s : Solver) (e : Int) (hb : s.inconsistent = true ∨ Flagged s
     have hbody : s.addClauseBody = s := by
       unfold addClauseBody
       rcases hb with h | h
-      · rw [if_pos h]
+      · rw [ite_eq_left h]
       · by_cases hi : s.inconsistent = true
-        · rw [if_pos hi]
-        · rw [if_neg hi, if_pos (by unfold Flagged at h; rcases h with h | h | h <;> simp [h])]
+        · rw [ite_eq_left hi]
+        · rw [ite_eq_right hi, ite_eq_left (by unfold Flagged at h; rcases h with h | h | h <;> simp [h])]
     rw [hbody]
     exact (show KF _ (s.clearClauseMarks 0) by kf_rfl).trans (clearClauseMarks_kf _ _)
   · dsimp only

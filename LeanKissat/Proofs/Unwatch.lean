@@ -61,7 +61,7 @@ theorem removeBlockingLoop_size (ref : Ref) : ∀ (ws : WVec) (p q : Nat), q ≤
   | case3 ws p q hp w ws' hb t ws'' ht ih => intro h; rw [ih (by omega)]; simp [ws'', ws', WVec.size, WVec.set!]
   | case4 => intro _; rfl
 
-theorem removeBlockingLoop_spec (ref : Ref) (href : ref.toNat < 2 ^ 31) :
+theorem removeBlockingLoop_spec (ref : Ref) (_href : ref.toNat < 2 ^ 31) :
     ∀ (ws : WVec) (p q : Nat) (R : List WEntry), q ≤ p → ws.data.toList.drop p = encodeWatches R →
     (∀ e ∈ R, e.WF) →
     (removeBlockingLoop ws ref p q).data.toList.take (q + (encodeWatches (R.filter (keepRef ref))).length) =
@@ -330,10 +330,10 @@ theorem swap_writeOK {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 
     simp only [hL, List.getElem_set]
     by_cases e1 : k = i
     · subst e1; simp
-    · rw [if_neg (Ne.symm e1)]
+    · rw [ite_eq_right (Ne.symm e1)]
       by_cases e2 : k = j
       · subst e2; simp [e1]
-      · rw [if_neg (Ne.symm e2), if_neg e1, if_neg e2]; exact getElem_litsL _ _ _ _
+      · rw [ite_eq_right (Ne.symm e2), ite_eq_right e1, ite_eq_right e2]; exact getElem_litsL _ _ _ _
 
 end Arena
 end LeanKissat
@@ -394,7 +394,7 @@ theorem countRef_zero (r : Ref) : ∀ (L : List WEntry), (∀ b, WEntry.large b 
     | large b x =>
       simp only [countRef]
       have : x ≠ r := by intro e; subst e; exact h b (List.mem_cons_self ..)
-      rw [if_neg this, ih (fun b' hb => h b' (List.mem_cons_of_mem _ hb))]
+      rw [ite_eq_right this, ih (fun b' hb => h b' (List.mem_cons_of_mem _ hb))]
 
 theorem countRef_filter_self (r : Ref) (L : List WEntry) : countRef r (L.filter (keepRef r)) = 0 := by
   apply countRef_zero; intro b hb
@@ -412,7 +412,7 @@ theorem countRef_filter_ne (r x : Ref) (hx : x ≠ r) : ∀ (L : List WEntry),
       by_cases e : y = r
       · subst e
         have : (y != y) = false := by simp
-        simp only [List.filter, keepRef, this, countRef, ih, if_neg (Ne.symm hx)]
+        simp only [List.filter, keepRef, this, countRef, ih, ite_eq_right (Ne.symm hx)]
         simp
       · have : (y != r) = true := bne_iff_ne.mpr e
         simp only [List.filter, keepRef, this, countRef, ih]
@@ -524,7 +524,7 @@ theorem moveWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {r 
     intro k hk; rw [eA]; exact sw5 k hk
   have hti : t.arena.lit r i = hl' := by rw [hlit_t i (by omega)]; simp
   have hto : t.arena.lit r (1 - i) = other := by
-    rw [hlit_t (1 - i) (by omega), if_neg (by omega), if_neg (by omega), hoth]
+    rw [hlit_t (1 - i) (by omega), ite_eq_right (by omega), ite_eq_right (by omega), hoth]
   have hlit_other : ∀ x ∈ s.arena.chain 0 s.arena.sizeWards, x ≠ r → ∀ k, k < (s.arena.size x).toNat →
       t.arena.lit x k = s.arena.lit x k := by
     intro x hx hxr k hk
@@ -549,16 +549,16 @@ theorem moveWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {r 
     rw [hent]
     by_cases e1 : l = hl' <;> by_cases e2 : l = lit
     · subst e1; exact absurd e2 hne1
-    · rw [if_pos e1, if_neg e2, countRef_append]; simp [countRef, Ne.symm hx]
-    · rw [if_neg e1, if_pos e2]; exact countRef_filter_ne r x hx _
-    · rw [if_neg e1, if_neg e2]
+    · rw [ite_eq_left e1, ite_eq_right e2, countRef_append]; simp [countRef, Ne.symm hx]
+    · rw [ite_eq_right e1, ite_eq_left e2]; exact countRef_filter_ne r x hx _
+    · rw [ite_eq_right e1, ite_eq_right e2]
   have hBin : ∀ a b, t.BinWatched a b ↔ s.BinWatched a b := by
     intro a b; unfold BinWatched; rw [hent]
     by_cases e1 : a = hl' <;> by_cases e2 : a = lit
     · subst e1; exact absurd e2 hne1
-    · rw [if_pos e1, if_neg e2]; simp
-    · rw [if_neg e1, if_pos e2, mem_filter_keepRef]; simp
-    · rw [if_neg e1, if_neg e2]
+    · rw [ite_eq_left e1, ite_eq_right e2]; simp
+    · rw [ite_eq_right e1, ite_eq_left e2, mem_filter_keepRef]; simp
+    · rw [ite_eq_right e1, ite_eq_right e2]
   refine ⟨⟨fun l => (adE l).2, ?_, ?_, ?_, by rw [eD]; exact hW.delayed, ?_,
     by rw [eV]; exact hW.varsBound⟩, by rw [eA]; exact sw1.layout, by rw [eA]; exact sw1, hperm, hBin, hti, eAsg, eV, eAna,
     eLev, eProp, eFr, eD⟩
@@ -593,9 +593,9 @@ theorem moveWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {r 
         · left; unfold lit0 at *; rw [hlit_other x k1 hxr 0 (by omega)]; exact e
         · right; unfold lit1 at *; rw [hlit_other x k1 hxr 1 (by omega)]; exact e
     by_cases e1 : l = hl'
-    · rw [if_pos e1] at hm
+    · rw [ite_eq_left e1] at hm
       rcases List.mem_append.mp hm with hm | hm
-      · rw [if_neg (by rw [e1]; exact hne1)] at hm
+      · rw [ite_eq_right (by rw [e1]; exact hne1)] at hm
         exact old hm (fun _ => by rw [e1]; exact hne1)
       · simp at hm; obtain ⟨rfl, rfl⟩ := hm
         refine ⟨hr.1, fun _ => ⟨?_, by rw [hperm.mem_iff]; rw [← hoth]; exact hmem _ (by omega)⟩⟩
@@ -603,12 +603,12 @@ theorem moveWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {r 
         rcases (by omega : i = 0 ∨ i = 1) with rfl | rfl
         · left; unfold lit0; exact hti.symm
         · right; unfold lit1; exact hti.symm
-    · rw [if_neg e1] at hm
+    · rw [ite_eq_right e1] at hm
       by_cases e2 : l = lit
-      · rw [if_pos e2] at hm
+      · rw [ite_eq_left e2] at hm
         obtain ⟨hm1, hm2⟩ := mem_filter_keepRef.mp hm
         exact old hm1 (fun hx => absurd (by rw [hx]) (hm2 b))
-      · rw [if_neg e2] at hm
+      · rw [ite_eq_right e2] at hm
         exact old hm (fun _ => e2)
   · -- live
     intro x hx
@@ -620,14 +620,14 @@ theorem moveWatch_ws {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) {r 
           unfold ValidLit; rw [eV]; exact g7 y (hperm.mem_iff.mp hy)⟩
       · rcases (by omega : i = 0 ∨ i = 1) with h0 | h0
         · subst h0
-          rw [show t.lit0 x = hl' from hti, hent, if_pos rfl, if_neg hne1, countRef_append, hcnt_hl]; simp [countRef]
+          rw [show t.lit0 x = hl' from hti, hent, ite_eq_left rfl, ite_eq_right hne1, countRef_append, hcnt_hl]; simp [countRef]
         · subst h0
-          rw [show t.lit0 x = other from hto, hent, if_neg (Ne.symm hne2), if_neg (Ne.symm hne3)]; exact hcoth
+          rw [show t.lit0 x = other from hto, hent, ite_eq_right (Ne.symm hne2), ite_eq_right (Ne.symm hne3)]; exact hcoth
       · rcases (by omega : i = 0 ∨ i = 1) with h0 | h0
         · subst h0
-          rw [show t.lit1 x = other from hto, hent, if_neg (Ne.symm hne2), if_neg (Ne.symm hne3)]; exact hcoth
+          rw [show t.lit1 x = other from hto, hent, ite_eq_right (Ne.symm hne2), ite_eq_right (Ne.symm hne3)]; exact hcoth
         · subst h0
-          rw [show t.lit1 x = hl' from hti, hent, if_pos rfl, if_neg hne1, countRef_append, hcnt_hl]; simp [countRef]
+          rw [show t.lit1 x = hl' from hti, hent, ite_eq_left rfl, ite_eq_right hne1, countRef_append, hcnt_hl]; simp [countRef]
     · obtain ⟨k1, k2, k3, k4, k5, k6, k7⟩ := hW.live x hx'
       have hlv : 3 ≤ (s.arena.size x).toNat := k1
       have esz : t.arena.size x = s.arena.size x := by rw [eA]; exact sw1.size x hx'.1
@@ -803,7 +803,7 @@ theorem moveHighest_rel {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) 
   have hcl : ∀ (t : Solver) k, t.crefLit (.large r) k = t.arena.lit r k := fun _ _ => rfl
   rw [hcl] at h1
   by_cases hgt : hp > 1
-  · simp only [hgt, ite_true, decide_true]
+  · simp only [hgt, ite_true]
     obtain ⟨sw1, sw2, sw3, sw4, sw5⟩ := swap_writeOK hl hr.1 (i := i) (j := hp) (by omega) h3 (by omega)
     have hread : ∀ k, k < (s.arena.size r).toNat →
         ((s.arena.setLit r hp (s.arena.lit r i)).setLit r i (s.arena.lit r hp)).lit r k =
@@ -812,7 +812,7 @@ theorem moveHighest_rel {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) 
       rw [hread i (by omega)]; simp
     have e2 : ((s.arena.setLit r hp (s.arena.lit r i)).setLit r i (s.arena.lit r hp)).lit r (1 - i) =
         s.arena.lit r (1 - i) := by
-      rw [hread (1 - i) (by omega), if_neg (by omega), if_neg (by omega)]
+      rw [hread (1 - i) (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
     have key : ∀ t, t = ({ s.unwatchBlocking (s.arena.lit r i) r with arena := (s.arena.setLit r hp (s.arena.lit r i)).setLit r i (s.arena.lit r hp) } : Solver).watchBlocking (s.arena.lit r hp) (s.arena.lit r (1 - i)) r → MoveRel s t r := by
       intro t ht
       obtain ⟨m1, m2, m3, m4, m5, _, m7, m8, m9, m10, m11, m12, m13⟩ := moveWatch_ws hW hl hr hi hgt h3 ht
@@ -827,7 +827,7 @@ theorem moveHighest_rel {s : Solver} (hW : s.WatchStruct) (hl : s.arena.Layout) 
   · have hp1 : hp = 1 := by omega
     have hi0 : i = 0 := by omega
     subst hp1; subst hi0
-    simp only [hgt, ite_false, decide_false]
+    simp only [hgt, ite_false]
     rw [h1]
     exact swap01_rel hW hl hr
 

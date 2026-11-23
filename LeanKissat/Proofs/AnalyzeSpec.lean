@@ -42,7 +42,7 @@ theorem clearBitsUp_gen (v : U32Vec) (b : UInt8) (hb : AnaBit b) (n : Nat) :
         unfold abit abits
         rw [setABit_bits]
         congr 1
-        rw [if_neg (fun h => hsz h.2)]
+        rw [ite_eq_right (fun h => hsz h.2)]
       refine ⟨a1.trans f, by rw [a2]; rfl, fun i hi => ?_, fun i c hc hc' => by rw [a4 i c hc hc', hsame]⟩
       obtain ⟨h1, h2⟩ := a3 i hi
       rw [hsame] at h1
@@ -168,7 +168,7 @@ open Arena
 theorem analyzeReasonSideLiterals_off (s : Solver) (h : s.options.bumpreasons = 0) :
     s.analyzeReasonSideLiterals = s := by
   unfold analyzeReasonSideLiterals
-  rw [if_pos (by simp [h])]
+  rw [ite_eq_left (by simp [h])]
 
 /-- The analysis result (unless flagged): invariants, clean bookkeeping except `analyzed` marks. -/
 structure AOut (Φ : (Nat → Bool) → Prop) (s0 t : Solver) : Prop where

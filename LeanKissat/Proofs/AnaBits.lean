@@ -125,7 +125,7 @@ theorem listed_push {s t : Solver} {idx : UInt32} {b : UInt8}
   rw [hbits i c hc] at hi
   by_cases e : idx = i ∧ b = c
   · obtain ⟨rfl, rfl⟩ := e; exact hnew
-  · rw [if_neg e] at hi; exact hl c hc i (h c hc i hi)
+  · rw [ite_eq_right e] at hi; exact hl c hc i (h c hc i hi)
 
 theorem anaBit_removable : AnaBit ABits.removable := Or.inr (Or.inr (Or.inl rfl))
 theorem anaBit_poisoned : AnaBit ABits.poisoned := Or.inr (Or.inl rfl)

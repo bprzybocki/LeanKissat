@@ -47,7 +47,7 @@ theorem fixedValue_not_true {s : Solver} {l : Lit} (h : s.IsTrue l ∧ 0 < s.lvl
   · have : s.level' l ≠ 0 := by intro e; unfold lvl at hl; unfold level' at e; rw [e] at hl; simp at hl
     dsimp only; split
     · rfl
-    · rw [if_pos (by simpa using this)]; rfl
+    · rw [ite_eq_left (by simpa using this)]; rfl
   · unfold IsFalse at hf
     dsimp only; simp only [value, hf]
     split
@@ -96,7 +96,7 @@ theorem swPre_of {Φ : (Nat → Bool) → Prop} {u : Solver} {start : Ref} {P Q 
       unfold BinWatched at *
       rw [f4]
       have hvl : (IDX l).toNat < u.vars.toNat := h.sinv.rsizes.valid ht
-      rw [if_pos hvl]
+      rw [ite_eq_left hvl]
       apply List.mem_filter.mpr ⟨h2, ?_⟩
       simp only [flushKeep, Bool.not_eq_true', Bool.or_eq_false_iff]
       exact ⟨fixedValue_not_true (Or.inl ⟨ht, hl⟩), fixedValue_not_true (Or.inr h3.1)⟩
@@ -528,11 +528,11 @@ theorem CollOut.watchStruct (hC : CollOut u start P Q N f) (h : ColPre Φ u star
     intro l r hl
     obtain ⟨B, E, hE, _, hcnt⟩ := hC.ent l
     rw [hE, countRef_append, countRef_append, countRef_map_bin, hcnt r]
-    rw [if_pos (show (IDX l).toNat < u.vars.toNat from (hvl l).mp hl), countRef_filter_keep]
+    rw [ite_eq_left (show (IDX l).toNat < u.vars.toNat from (hvl l).mp hl), countRef_filter_keep]
     congr 1
     · by_cases hP : r ∈ P
-      · rw [if_pos hP, if_pos (by rw [UInt32.lt_iff_toNat_lt]; exact CollOut.P_lt h hP), Nat.add_zero]
-      · rw [if_neg hP, Nat.add_zero]
+      · rw [ite_eq_left hP, ite_eq_left (by rw [UInt32.lt_iff_toNat_lt]; exact CollOut.P_lt h hP), Nat.add_zero]
+      · rw [ite_eq_right hP, Nat.add_zero]
         split
         · rename_i hlt
           -- `r < start` entries of `u` point into the prefix
@@ -574,22 +574,22 @@ theorem CollOut.watchStruct (hC : CollOut u start P Q N f) (h : ColPre Φ u star
       have hv1 : f.ValidLit (f.lit1 r) := by rw [e1, hvl]; exact hv _ (lit_mem_clauseL (by omega))
       refine ⟨by rw [hsz]; exact h3, by rw [hcl]; exact hnd, by rw [hse]; exact hs1, by rw [hse, hsz]; exact hs2,
         ?_, ?_, fun x hx => by rw [hvl]; rw [hcl] at hx; exact hv x hx⟩
-      · rw [hcount _ _ hv0, if_pos hP, if_neg hnN, e0]; exact c0
-      · rw [hcount _ _ hv1, if_pos hP, if_neg hnN, e1]; exact c1
+      · rw [hcount _ _ hv0, ite_eq_left hP, ite_eq_right hnN, e0]; exact c0
+      · rw [hcount _ _ hv1, ite_eq_left hP, ite_eq_right hnN, e1]; exact c1
     · obtain ⟨o, _, _, _, _, hnd, hv, h3, hse, _, _⟩ := hC.liveN h hN
       have hnP : r ∉ P := fun hp => by have := CollOut.P_lt h hp; have := hC.N_ge hN; omega
       have hne := lit01_ne hnd (by omega)
       have hv0 : f.ValidLit (f.lit0 r) := hv _ (lit_mem_clauseL (by omega))
       have hv1 : f.ValidLit (f.lit1 r) := hv _ (lit_mem_clauseL (by omega))
       refine ⟨h3, hnd, by rw [hse]; decide, by rw [hse]; simp; omega, ?_, ?_, hv⟩
-      · rw [hcount _ _ hv0, if_neg hnP, if_pos hN, if_pos rfl, if_neg hne]
-      · rw [hcount _ _ hv1, if_neg hnP, if_pos hN, if_pos rfl, if_neg (Ne.symm hne)]
+      · rw [hcount _ _ hv0, ite_eq_right hnP, ite_eq_left hN, ite_eq_left rfl, ite_eq_right hne]
+      · rw [hcount _ _ hv1, ite_eq_right hnP, ite_eq_left hN, ite_eq_left rfl, ite_eq_right (Ne.symm hne)]
   · -- binary clauses
     rcases hC.binNew a b hab with ⟨h1, h2, h3⟩ | ⟨h1, o, ho, g, h2⟩
     · obtain ⟨k1, k2, k3, k4⟩ := hW.bin a b h1
       refine ⟨?_, (hvl a).mpr k2, (hvl b).mpr k3, k4⟩
       obtain ⟨B, E, hE, _, _⟩ := hC.ent b
-      unfold BinWatched; rw [hE, if_pos (show (IDX b).toNat < u.vars.toNat from k3)]
+      unfold BinWatched; rw [hE, ite_eq_left (show (IDX b).toNat < u.vars.toNat from k3)]
       apply List.mem_append_left; apply List.mem_append_left
       apply List.mem_filter.mpr ⟨k1, ?_⟩
       simp only [flushKeep, Bool.not_eq_true', Bool.or_eq_false_iff] at h3 ⊢
@@ -785,7 +785,7 @@ theorem CollOut.final (hC : CollOut u start P Q N f) (h : ColPre Φ u start P Q)
       · refine Or.inr ⟨[a, b], Or.inr ⟨a, b, ?_, rfl⟩, fun _ h => h⟩
         obtain ⟨_, ha, _, _⟩ := hs.ws.bin a b hab
         obtain ⟨B, E, hE, _, _⟩ := hC.ent a
-        unfold BinWatched; rw [hE, if_pos (show (IDX a).toNat < u.vars.toNat from ha)]
+        unfold BinWatched; rw [hE, ite_eq_left (show (IDX a).toNat < u.vars.toNat from ha)]
         exact List.mem_append_left _ (List.mem_append_left _ (List.mem_filter.mpr ⟨hab, hk⟩))
       · left
         have hk2 : (vTrue (u.fixedValue a) || vTrue (u.fixedValue b)) = true := by
@@ -857,8 +857,8 @@ theorem sparseCollect_spec {Φ : (Nat → Bool) → Prop} {u : Solver} {start : 
   obtain ⟨res, t⟩ := R
   dsimp only at hsw ⊢
   by_cases hres : (res != INVALID_REF) = true
-  · rw [if_pos hres]; exact Or.inl rfl
-  rw [if_neg hres]
+  · rw [ite_eq_left hres]; exact Or.inl rfl
+  rw [ite_eq_right hres]
   rcases hsw with hf | ⟨N, hO⟩
   · left; rw [rewatchClauses_np]; exact hf
   right

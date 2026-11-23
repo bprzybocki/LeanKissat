@@ -163,7 +163,7 @@ theorem ShInv.shrinkLit {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (
   · intro i hi
     rcases (r3 i).mp hi with hold | ⟨h1, rfl⟩
     · exact hlist _ (h.shL i hold)
-    · rw [r4, if_pos h1]; simp
+    · rw [r4, ite_eq_left h1]; simp
   · intro y hf hl hsh
     rcases (r3 _).mp hsh with hold | ⟨h1, hyx⟩
     · rcases h.status y hf hl hold with hp | hr
@@ -176,7 +176,7 @@ theorem ShInv.shrinkLit {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (
     unfold shCount
     have hnd : (s0.trailL.take (t + 1)).Nodup := hb.trail_nodup.sublist (List.take_sublist _ _)
     by_cases h1 : tmp = 1
-    · rw [if_pos h1]
+    · rw [ite_eq_left h1]
       obtain ⟨hns, hl0⟩ := r6 h1
       obtain ⟨p, hp, hpx⟩ := hpos (Nat.pos_of_ne_zero hl0)
       have hmem : NOT x ∈ s0.trailL.take (t + 1) := by
@@ -196,7 +196,7 @@ theorem ShInv.shrinkLit {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (
           · rw [h3] at h4; exact absurd h4 (by simp)
           · exact absurd h4 this
         · rfl
-    · rw [if_neg h1, Nat.add_zero]
+    · rw [ite_eq_right h1, Nat.add_zero]
       symm
       apply countP_eq_of_agree
       intro z _
@@ -252,7 +252,7 @@ theorem findShrinkable_spec (s0 s : Solver) (hs : AF s s0) :
       rw [List.take_add_one, List.take_zero, List.nil_append, h0] at hc
       simp only [Option.toList_some, List.countP_singleton] at hc
       unfold isSh at hc; split at hc <;> simp_all
-    rw [if_pos hsh]
+    rw [ite_eq_left hsh]
     refine ⟨0, Nat.le_refl _, h0, hsh, rfl, ?_, fun q h1 h2 => absurd h2 (by omega)⟩
     unfold shCount
     rw [List.take_add_one, List.take_zero, List.nil_append, h0]
@@ -268,10 +268,10 @@ theorem findShrinkable_spec (s0 s : Solver) (hs : AF s s0) :
       rw [show t + 1 + 1 = (t + 1) + 1 from rfl, List.take_add_one (i := t + 1), ht]
       simp only [Option.toList_some, List.countP_append, List.countP_singleton]
     by_cases hsh : s.abit (IDX (s.asg.trail.get! (t + 1))) ABits.shrinkable = true
-    · rw [if_pos hsh]
+    · rw [ite_eq_left hsh]
       refine ⟨t + 1, Nat.le_refl _, ht, hsh, rfl, ?_, fun q h1 h2 => absurd h2 (by omega)⟩
       rw [hsplit]; unfold shCount; simp [isSh, hsh]
-    · rw [if_neg hsh, dif_neg (by omega)]
+    · rw [ite_eq_right hsh, dite_eq_right (by omega)]
       have hsh' : s.isSh (IDX (s.asg.trail.get! (t + 1))) = false := by simpa [isSh] using hsh
       rw [hsplit, hsh'] at hc
       simp only [Bool.false_eq_true, ite_false, Nat.add_zero] at hc
@@ -325,7 +325,7 @@ theorem shrinkLargeLoop_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : N
     rw [heq] at b1 b4 b5 b6 b7
     simp only at b1 b4 b5 b6 b7
     have : (if tmp = 1 then 1 else 0) = 0 := by
-      rw [if_neg]; intro e; rw [e] at hneg; simp at hneg
+      rw [ite_eq_right]; intro e; rw [e] at hneg; simp at hneg
     rw [this, Nat.add_zero] at b1
     refine ⟨b1, fun hf => absurd hf (by simp), b5, fun j hj => ?_, b7⟩
     rcases b4 j hj with h' | h'
@@ -819,8 +819,8 @@ theorem shrinkBlockLits_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : N
         have h1 : (s.shrinkLiteral level lit).1 = 1 := by
           by_cases hc : (s.shrinkLiteral level lit).1 = 1
           · exact hc
-          · rw [if_neg hc] at hl; simp at hl; omega
-        rw [if_pos h1] at hl; simp at hl
+          · rw [ite_eq_right hc] at hl; simp at hl; omega
+        rw [ite_eq_left h1] at hl; simp at hl
         by_cases eq : q = p
         · subst eq
           exact i3 _ (by rw [hs']; exact r3 h1)
@@ -853,8 +853,8 @@ theorem invalidateBlock_spec (e : Nat) :
       · simp [hq, hp, this]
       · simp [hq]
     · by_cases h' : p + 1 ≤ q ∧ q < e ∧ q < s.clause.size
-      · rw [if_pos h', if_pos ⟨by omega, h'.2⟩]
-      · rw [if_neg h', if_neg (fun h'' => h' ⟨by omega, h''.2⟩)]
+      · rw [ite_eq_left h', ite_eq_left ⟨by omega, h'.2⟩]
+      · rw [ite_eq_right h', ite_eq_right (fun h'' => h' ⟨by omega, h''.2⟩)]
   | case2 s p cnt hp hinv ih =>
     obtain ⟨c, h1, h2, h3⟩ := ih
     refine ⟨c, h1, by rw [h2]; simp, fun q => ?_⟩
@@ -863,13 +863,13 @@ theorem invalidateBlock_spec (e : Nat) :
     by_cases eq : q = p
     · subst eq; by_cases hq : q < s.clause.size <;> simp [hq, hp]
     · by_cases h' : p + 1 ≤ q ∧ q < e ∧ q < s.clause.size
-      · rw [if_pos h', if_pos ⟨by omega, h'.2⟩]
+      · rw [ite_eq_left h', ite_eq_left ⟨by omega, h'.2⟩]
       · have n1 : ¬ (p = q ∧ q < s.clause.size) := fun h'' => eq h''.1.symm
         have n2 : ¬ (p ≤ q ∧ q < e ∧ q < s.clause.size) := fun h'' => h' ⟨by omega, h''.2⟩
-        rw [if_neg h', if_neg n1, if_neg n2]
+        rw [ite_eq_right h', ite_eq_right n1, ite_eq_right n2]
   | case3 s p cnt hp =>
     refine ⟨s.clause, rfl, rfl, fun q => ?_⟩
-    rw [if_neg (fun h => hp (by omega))]
+    rw [ite_eq_right (fun h => hp (by omega))]
 
 end Solver
 end LeanKissat
@@ -1050,11 +1050,11 @@ theorem markShrinkableAsRemovable_spec {Φ : (Nat → Bool) → Prop} {s0 : Solv
     · rw [c8 i _ (Or.inl rfl)] at hi'
       have := hl _ anaBit_analyzed i hi'
       show i ∈ (if ABits.analyzed = ABits.analyzed then t.analyzed.view else _)
-      rw [if_pos rfl, c9]; simpa [anaList] using this
+      rw [ite_eq_left rfl, c9]; simpa [anaList] using this
     · rw [c8 i _ (Or.inr rfl)] at hi'
       have := hl _ anaBit_poisoned i hi'
       show i ∈ (if ABits.poisoned = ABits.analyzed then _ else if ABits.poisoned = ABits.poisoned then t.poisoned.view else _)
-      rw [if_neg (by decide), if_pos rfl, c10]
+      rw [ite_eq_right (by decide), ite_eq_left rfl, c10]
       simpa [anaList, show ABits.poisoned ≠ ABits.analyzed by decide] using this
     · have := c11 (fun j hj => by
         have := hl _ anaBit_removable j hj
@@ -1062,7 +1062,7 @@ theorem markShrinkableAsRemovable_spec {Φ : (Nat → Bool) → Prop} {s0 : Solv
           show ABits.removable ≠ ABits.poisoned by decide] using this) i hi'
       show i ∈ (if ABits.removable = ABits.analyzed then _ else if ABits.removable = ABits.poisoned then _
         else if ABits.removable = ABits.removable then t.removable.view else _)
-      rw [if_neg (by decide), if_neg (by decide), if_pos rfl]; exact this
+      rw [ite_eq_right (by decide), ite_eq_right (by decide), ite_eq_left rfl]; exact this
     · have := hnosh i; unfold isSh at this; rw [this] at hi'; exact absurd hi' (by simp)
 
 end Solver
@@ -1095,7 +1095,7 @@ theorem shrunkenBlock_eq (s : Solver) (b e : Nat) (uip : Lit) (c : U32Vec)
 
 theorem shrunkenBlock_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb : DBase Φ s0 L)
     {B : List Lit} {s : Solver} (h : ShFin s0 B s) {b e : Nat} (hbe : b < e) (hes : e ≤ s.clause.size)
-    {uip : Lit} (hu : s0.IsTrue uip) (hul : 0 < s0.lvl uip) (hush : s.isSh (IDX uip) = true)
+    {uip : Lit} (hu : s0.IsTrue uip) (_hul : 0 < s0.lvl uip) (_hush : s.isSh (IDX uip) = true)
     (hrce : ∀ y, s0.IsFalse y → 0 < s0.lvl y → s.isSh (IDX y) = true → IDX y ≠ IDX uip →
       RCE s0 s s.shrinkable.view y)
     (hblk : ∀ q, b ≤ q → q < e → s.isSh (IDX (s.clause.get! q)) = true) :
@@ -1150,16 +1150,16 @@ theorem shrunkenBlock_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat
     rw [hcl, U32Vec.get!_set!, hc3, hc2]
     by_cases eq : q = b
     · subst eq; simp [show q < s.clause.size by omega]
-    · rw [if_neg (fun h' => eq h'.1.symm), if_neg eq]
+    · rw [ite_eq_right (fun h' => eq h'.1.symm), ite_eq_right eq]
       by_cases h' : b ≤ q ∧ q < e
-      · rw [if_pos ⟨h'.1, h'.2, by omega⟩, if_pos h']
-      · rw [if_neg (fun h'' => h' ⟨h''.1, h''.2.1⟩), if_neg h']
+      · rw [ite_eq_left ⟨h'.1, h'.2, by omega⟩, ite_eq_left h']
+      · rw [ite_eq_right (fun h'' => h' ⟨h''.1, h''.2.1⟩), ite_eq_right h']
   have hrem : ∀ i, s.isRem i = true → t.isRem i = true := fun i hi => m3 i (by rw [rm3]; exact hi)
   have hshrem : ∀ i ∈ s.shrinkable.view, t.isRem i = true := by
     intro i hi; exact m4 i (by rw [sh3]; exact hi)
   have hNotUip : NOT uip ∈ t.clause.view := by
     have := get!_mem_view t.clause b (by omega)
-    rw [hget, if_pos rfl] at this; exact this
+    rw [hget, ite_eq_left rfl] at this; exact this
   -- a shrinkable false literal is in the new clause or has a closed reason
   have hsh : ∀ y, s0.IsFalse y → 0 < s0.lvl y → s.isSh (IDX y) = true →
       y ∈ t.clause.view ∨ RCE s0 t [] y := by
@@ -1188,7 +1188,7 @@ theorem shrunkenBlock_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat
         rw [hget] at this
         by_cases eq : q = b
         · exact absurd ⟨by omega, by omega⟩ hqb
-        · rw [if_neg eq, if_neg hqb, hqy] at this; exact this
+        · rw [ite_eq_right eq, ite_eq_right hqb, hqy] at this; exact this
     · right; exact h4.mono hrem (fun j hj => by simp at hj)
   · obtain ⟨y, h1, h2, h3⟩ := h.shA i (h.listSh i (by rw [← sh3]; exact h'))
     refine ⟨y, h1, h2, h3, ?_⟩
@@ -1256,7 +1256,7 @@ def BOut (s0 s t : Solver) (b e : Nat) (n : Nat) : Prop :=
    (n ≠ 0 ∧ ∃ x, s0.IsFalse x ∧ 0 < s0.lvl x ∧ ∀ q, t.clause.get! q =
       if q = b then x else if b ≤ q ∧ q < e then INVALID_LIT else s.clause.get! q))
 
-theorem BPre.shInv {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb : DBase Φ s0 L)
+theorem BPre.shInv {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (_hb : DBase Φ s0 L)
     {s : Solver} (h : BPre s0 s) (hse : s.shrinkable.view = []) {t : Nat} (ht : t < s0.trailL.length) :
     ShInv s0 s.clause.view s t s.shrinkable.view.length := by
   refine ⟨h.af, rfl, h.good, fun i hi => by rw [h.noSh] at hi; simp at hi,
@@ -1337,11 +1337,11 @@ theorem shrinkBlock_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} 
     Or.inr ⟨?_, NOT uip, hnu, hnul, fun q => by rw [w3, hlitsv _ hv2]⟩⟩
   · rw [w3] at hne ⊢
     by_cases eq : q = b
-    · rw [if_pos eq]; exact ⟨hnu, hnul⟩
-    · rw [if_neg eq] at hne ⊢
+    · rw [ite_eq_left eq]; exact ⟨hnu, hnul⟩
+    · rw [ite_eq_right eq] at hne ⊢
       by_cases hq' : b ≤ q ∧ q < e
-      · rw [if_pos hq'] at hne; exact absurd rfl hne
-      · rw [if_neg hq'] at hne ⊢
+      · rw [ite_eq_left hq'] at hne; exact absurd rfl hne
+      · rw [ite_eq_right hq'] at hne ⊢
         rw [hlitsv _ hv2] at hne ⊢
         exact h.lits q (by rw [w2, hsizev _ hv2] at hq; exact hq) hne
   · rw [shrunkenBlock_fst, invalidateBlock_count e s2 b 0 (fun q hq1 hq2 => by
@@ -1425,15 +1425,15 @@ theorem minimizeBlockLoop_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L :
           obtain ⟨q, hq, hqy⟩ := mem_view_pos _ _ hy
           have hqp : q ≠ p := by intro e'; subst e'; exact eq hqy.symm
           have := get!_mem_view s2.clause q (by rw [hsz2]; exact hq)
-          rw [hget2, if_neg hqp, hqy] at this; exact this
+          rw [hget2, ite_eq_right hqp, hqy] at this; exact this
       · rw [hget2] at hne' ⊢
         by_cases eq : q = p
-        · rw [if_pos eq] at hne'; exact absurd rfl hne'
-        · rw [if_neg eq] at hne' ⊢; exact h.lits q (by rw [← hsz2]; exact hq) hne'
+        · rw [ite_eq_left eq] at hne'; exact absurd rfl hne'
+        · rw [ite_eq_right eq] at hne' ⊢; exact h.lits q (by rw [← hsz2]; exact hq) hne'
     obtain ⟨a1, a2, a3, a4⟩ := ih hpre2 (by rw [hsz2]; exact hes)
-      (fun q hq1 hq2 => by rw [hget2, if_neg (by omega)]; exact hinv q (by omega) hq2)
+      (fun q hq1 hq2 => by rw [hget2, ite_eq_right (by omega)]; exact hinv q (by omega) hq2)
     refine ⟨a1, by rw [a2, hsz2], fun i hi => a3 i (by rw [← hs2]; exact t1.rem i hi), fun q hq => ?_⟩
-    rw [a4 q (by omega), hget2, if_neg (by omega)]
+    rw [a4 q (by omega), hget2, ite_eq_right (by omega)]
   | case3 s p m hp =>
     intro h _ _
     exact ⟨h, rfl, fun _ h => h, fun _ _ => rfl⟩
@@ -1466,7 +1466,7 @@ theorem minimizeAndShrinkBlock_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver}
     intro q hq
     rcases o4 with ⟨_, hv⟩ | ⟨_, x, _, _, hx⟩
     · rw [U32Vec.get!_eq_view, hv, ← U32Vec.get!_eq_view]; exact hpre q (by omega)
-    · rw [hx, if_neg (by omega), if_neg (by omega)]; exact hpre q (by omega)
+    · rw [hx, ite_eq_right (by omega), ite_eq_right (by omega)]; exact hpre q (by omega)
   split
   · rename_i hn
     have hn' : n = 0 := by simpa using hn
@@ -1620,7 +1620,7 @@ theorem clearBitsUp_spec (v : U32Vec) (b : UInt8) (hb : b = ABits.shrinkable ∨
         unfold abit abits
         rw [setABit_bits]
         congr 1
-        rw [if_neg (fun h => hsz h.2)]
+        rw [ite_eq_right (fun h => hsz h.2)]
       refine ⟨a1.trans f, fun i => by rw [a2]; exact hsame i _, by rw [a3]; rfl, ?_, fun i c _ _ => by rw [a5 i c ‹_› ‹_›, hsame],
         fun c => by rw [a6]; rfl⟩
       intro i hi

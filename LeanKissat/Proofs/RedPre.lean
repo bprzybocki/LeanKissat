@@ -118,11 +118,11 @@ theorem setReason_reason (a : Arena) (h : a.Layout) {r x : Ref} (hr : r ∈ a.ch
   unfold reason flag setReason setFlag setWord0
   by_cases e : x = r
   · subst e
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     show ((a.words.set! (base x) _).get! (base x) &&& _ != 0) = m
     rw [U32Vec.get!_set!_self _ _ _ (by unfold base; omega)]
     exact reasonBit_set _ m
-  · rw [if_neg e]
+  · rw [ite_eq_right e]
     show ((a.words.set! (base r) _).get! (base x) &&& _ != 0) = (a.word0 x &&& _ != 0)
     rw [U32Vec.get!_set!_ne _ _ _ _ ((header_ne h hr hx).2.2.2 (Ne.symm e))]
     rfl
@@ -146,7 +146,7 @@ theorem markReasonLoop_spec {Φ : (Nat → Bool) → Prop} (start : Ref) (mark :
   induction s, i using markReasonLoop.induct start mark n with
   | case1 s i hi idx ref s' ih =>
     intro hR hP
-    rw [markReasonLoop, if_pos hi]
+    rw [markReasonLoop, ite_eq_left hi]
     dsimp only
     have ha := hR.asg
     have hlit : s0.trailL[i]? = some (s.asg.trail.get! i) := by
@@ -191,7 +191,7 @@ theorem markReasonLoop_spec {Φ : (Nat → Bool) → Prop} (start : Ref) (mark :
           -- a genuine reason clause
           have hmi : MarkedR s0 start (s.asg.trail.get! i) := by
             rw [hbf, hrf'] at hc
-            simp only [Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq, not_or, Nat.not_lt] at hc
+            simp only [Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq, not_or] at hc
             refine ⟨?_, by simpa using hc.1.1, hc.1.2, by rw [UInt32.le_iff_toNat_le]; rw [UInt32.lt_iff_toNat_lt] at hc; omega⟩
             unfold lvl; rw [← hlvl]
             apply Nat.pos_of_ne_zero; intro e; apply hz; simp only [beq_iff_eq]
@@ -216,7 +216,7 @@ theorem markReasonLoop_spec {Φ : (Nat → Bool) → Prop} (start : Ref) (mark :
     exact ih hstep.1 hstep.2
   | case2 s i hi =>
     intro hR hP
-    rw [markReasonLoop, if_neg hi]
+    rw [markReasonLoop, ite_eq_right hi]
     exact ⟨hR, fun j l hj hjl hm => hP j l (by omega) hjl hm⟩
 
 theorem markReasonClauses_spec {Φ : (Nat → Bool) → Prop} (s : Solver) (start : Ref) (mark : Bool)
@@ -280,34 +280,34 @@ theorem collectLoop_spec (refs : Array Ref) (tier1 tier2 : UInt32) (s0 : Solver)
   intro s reds i
   induction s, reds, i using collectLoop.induct refs tier1 tier2 with
   | case1 s reds i hi c hc ih =>
-    intro h1 h2 h3; rw [collectLoop, dif_pos hi]; dsimp only; rw [if_pos hc]; exact ih h1 h2 h3
+    intro h1 h2 h3; rw [collectLoop, dite_eq_left hi]; dsimp only; rw [ite_eq_left hc]; exact ih h1 h2 h3
   | case2 s reds i hi c hc used s' hr ih =>
     intro h1 h2 h3
-    rw [collectLoop, dif_pos hi]; dsimp only; rw [if_neg hc]
+    rw [collectLoop, dite_eq_left hi]; dsimp only; rw [ite_eq_right hc]
     have hcm : c ∈ refs.toList := by simp [c]
     obtain ⟨k1, k2⟩ := hU s c used h1 hcm h2
     have hr' : (if used != 0 then { s with arena := s.arena.setUsed c (used - 1) } else s).arena.reason c = true := hr
-    rw [if_pos hr']
+    rw [ite_eq_left hr']
     exact ih k1 k2 h3
   | case3 s reds i hi c hc used s' hr glue hg ih =>
     intro h1 h2 h3
-    rw [collectLoop, dif_pos hi]; dsimp only; rw [if_neg hc]
+    rw [collectLoop, dite_eq_left hi]; dsimp only; rw [ite_eq_right hc]
     have hcm : c ∈ refs.toList := by simp [c]
     obtain ⟨k1, k2⟩ := hU s c used h1 hcm h2
     have hr' : ¬ (if used != 0 then { s with arena := s.arena.setUsed c (used - 1) } else s).arena.reason c = true := hr
-    rw [if_neg hr']; try dsimp only
+    rw [ite_eq_right hr']; try dsimp only
     have hg' := hg; simp only [glue, s', used, c, dite_eq_ite] at hg'
-    rw [if_pos hg']
+    rw [ite_eq_left hg']
     exact ih k1 k2 h3
   | case4 s reds i hi c hc used s' hr glue hg negSize negGlue ih =>
     intro h1 h2 h3
-    rw [collectLoop, dif_pos hi]; dsimp only; rw [if_neg hc]
+    rw [collectLoop, dite_eq_left hi]; dsimp only; rw [ite_eq_right hc]
     have hcm : c ∈ refs.toList := by simp [c]
     obtain ⟨k1, k2⟩ := hU s c used h1 hcm h2
     have hr' : ¬ (if used != 0 then { s with arena := s.arena.setUsed c (used - 1) } else s).arena.reason c = true := hr
-    rw [if_neg hr']; try dsimp only
+    rw [ite_eq_right hr']; try dsimp only
     have hg' := hg; simp only [glue, s', used, c, dite_eq_ite] at hg'
-    rw [if_neg hg']
+    rw [ite_eq_right hg']
     simp only [negSize, negGlue, glue, s', used, c, dite_eq_ite] at ih
     apply ih k1 k2
     intro x hx
@@ -318,7 +318,7 @@ theorem collectLoop_spec (refs : Array Ref) (tier1 tier2 : UInt32) (s0 : Solver)
       · simp only [Bool.or_eq_true, Bool.not_eq_true', not_or, Bool.not_eq_false] at hc
         have := (h1.arena.flags (hrefs c hcm)).2.1; rw [← this]; exact hc.1
       · rw [← k2 c (hrefs c hcm)]; simpa using hr'
-  | case5 s reds i hi => intro h1 h2 h3; rw [collectLoop, dif_neg hi]; exact ⟨h1, h2, h3⟩
+  | case5 s reds i hi => intro h1 h2 h3; rw [collectLoop, dite_eq_right hi]; exact ⟨h1, h2, h3⟩
 
 theorem rf_firstReducible (s : Solver) (r : Ref) : RF { s with firstReducible := r } s := ⟨rfl, Arena.Same.refl _⟩
 
@@ -456,14 +456,14 @@ theorem setGarbage_gsame (hl : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 a.sizeW
     show (a.words.set! (base r) (if true = true then a.word0 r ||| _ else _)).get! j = _
     rw [U32Vec.get!_set!]
     by_cases e : base r = j
-    · rw [if_pos ⟨e, by rw [← e]; unfold base; omega⟩, if_pos e]; rfl
-    · rw [if_neg (fun h => e h.1), if_neg e]
+    · rw [ite_eq_left ⟨e, by rw [← e]; unfold base; omega⟩, ite_eq_left e]; rfl
+    · rw [ite_eq_right (fun h => e h.1), ite_eq_right e]
   refine ⟨by simp [setGarbage, setFlag, setWord0], fun j hj => ?_, fun x hx => ?_⟩
-  · rw [hget, if_neg (fun e => hj r hr e.symm)]
+  · rw [hget, ite_eq_right (fun e => hj r hr e.symm)]
   · by_cases e : x = r
     · subst e; right
-      refine ⟨by unfold word0; rw [hget, if_pos rfl]; rfl, hs, hred, hreas⟩
-    · left; unfold word0; rw [hget, if_neg ((header_ne hl hr hx).2.2.2 (Ne.symm e))]
+      refine ⟨by unfold word0; rw [hget, ite_eq_left rfl]; rfl, hs, hred, hreas⟩
+    · left; unfold word0; rw [hget, ite_eq_right ((header_ne hl hr hx).2.2.2 (Ne.symm e))]
 
 end G
 
@@ -482,7 +482,7 @@ theorem markGarbageLoop_spec (start : Ref) (reds : Array Reducible) (n : Nat) (s
   induction s, i using markGarbageLoop.induct start reds n with
   | case1 s i hi r s' ih =>
     intro h1 h2
-    rw [markGarbageLoop, if_pos hi]
+    rw [markGarbageLoop, ite_eq_left hi]
     apply ih
     · simp only [s']
       split
@@ -500,7 +500,7 @@ theorem markGarbageLoop_spec (start : Ref) (reds : Array Reducible) (n : Nat) (s
         exact h2.trans (setGarbage_gsame hls hch hc.1.1 hc.1.2 hc.2) hl
       · exact h2
   | case2 s i hi =>
-    intro h1 h2; rw [markGarbageLoop, if_neg hi]; exact ⟨h1, h2⟩
+    intro h1 h2; rw [markGarbageLoop, ite_eq_right hi]; exact ⟨h1, h2⟩
 
 theorem _root_.LeanKissat.Arena.LayoutTo.congr_ss {a b : Arena} : ∀ {r : Ref} {e : Nat} {refs : List Ref},
     LayoutTo a r e refs → (∀ x ∈ refs, a.size x = b.size x ∧ b.shrunken x = false) → LayoutTo b r e refs := by

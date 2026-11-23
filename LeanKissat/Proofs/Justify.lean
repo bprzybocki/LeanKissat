@@ -178,7 +178,7 @@ theorem assign_reasonSizes (h : s.ReasonSizes) (hc : s.Core) (hl : s.ValidLit li
   · simp only [withAssign, Asg.assign, ByteArray.size_set!']; exact r2
   · intro j hj
     rw [hv] at hj
-    rw [hval, if_neg (by omega), if_neg (by omega)]
+    rw [hval, ite_eq_right (by omega), ite_eq_right (by omega)]
     exact r3 j hj
   · rw [hv]
     have hvar : (IDX lit).toNat < s.vars.toNat := hl
@@ -187,8 +187,8 @@ theorem assign_reasonSizes (h : s.ReasonSizes) (hc : s.Core) (hl : s.ValidLit li
       (IDX lit).toNat
       (by
         rcases two_mul_idx lit with e | e <;> rw [e, hval]
-        · rw [if_neg (lit_toNat_ne_not lit), if_pos rfl]; decide
-        · rw [if_pos rfl]; decide)
+        · rw [ite_eq_right (lit_toNat_ne_not lit), ite_eq_left rfl]; decide
+        · rw [ite_eq_left rfl]; decide)
       (by
         rcases two_mul_idx lit with e | e <;> rw [e]
         · rw [hx0]; rfl
@@ -199,7 +199,7 @@ theorem assign_reasonSizes (h : s.ReasonSizes) (hc : s.Core) (hl : s.ValidLit li
           intro e; apply hw; have := IDX_toNat (NOT lit); rw [IDX_NOT] at this; omega
         have e2 : 2 * w ≠ lit.toNat := by
           intro e; apply hw; have := IDX_toNat lit; omega
-        rw [hval, if_neg e1, if_neg e2])
+        rw [hval, ite_eq_right e1, ite_eq_right e2])
       s.vars.toNat hvar
     -- the unassigned counter
     have hlt : (List.range s.vars.toNat).countP (fun v => s.asg.values.get! (2 * v) != 0) <
@@ -225,7 +225,7 @@ theorem assign_reasonSizes (h : s.ReasonSizes) (hc : s.Core) (hl : s.ValidLit li
 theorem assign_reasonOf_ne (l : Lit) (hne : IDX l ≠ IDX lit) :
     (s.withAssign probing level binary lit reason).reasonOf l = s.reasonOf l := by
   simp only [reasonOf, reasonIdx, withAssign, Asg.assign, U32Vec.get!_set!]
-  rw [if_neg]; intro ⟨e, _⟩; exact hne (UInt32.toNat_inj.mp e).symm
+  rw [ite_eq_right]; intro ⟨e, _⟩; exact hne (UInt32.toNat_inj.mp e).symm
 
 theorem assign_binOf_ne (l : Lit) (hne : IDX l ≠ IDX lit) :
     (s.withAssign probing level binary lit reason).binOf l = s.binOf l := by

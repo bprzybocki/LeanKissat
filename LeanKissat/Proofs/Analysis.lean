@@ -53,7 +53,7 @@ theorem minimizeLit_block {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat}
   · exact h'
 
 /-- Removing the literal at `p` (justified by a closed reason) keeps `BPre`. -/
-theorem BPre.invalidate {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb : DBase Φ s0 L)
+theorem BPre.invalidate {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (_hb : DBase Φ s0 L)
     {s s' : Solver} (h : BPre s0 s) (t1 : MF s' s) (t2 : Good s0 s' s.clause.view) {p : Nat}
     (hp : p < s.clause.size) (hrce : RCE s0 s' [] (s.clause.get! p)) :
     BPre s0 { s' with clause := s'.clause.set! p INVALID_LIT } ∧
@@ -83,11 +83,11 @@ theorem BPre.invalidate {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (
       obtain ⟨q, hq, hqy⟩ := mem_view_pos _ _ hy
       have hqp : q ≠ p := by intro e'; subst e'; exact eq hqy.symm
       have := get!_mem_view s2.clause q (by rw [hsz2]; exact hq)
-      rw [hget2, if_neg hqp, hqy] at this; exact this
+      rw [hget2, ite_eq_right hqp, hqy] at this; exact this
   · rw [hget2] at hne' ⊢
     by_cases eq : q = p
-    · rw [if_pos eq] at hne'; exact absurd rfl hne'
-    · rw [if_neg eq] at hne' ⊢; exact h.lits q (by rw [← hsz2]; exact hq) hne'
+    · rw [ite_eq_left eq] at hne'; exact absurd rfl hne'
+    · rw [ite_eq_right eq] at hne' ⊢; exact h.lits q (by rw [← hsz2]; exact hq) hne'
 
 theorem minimizeDown_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb : DBase Φ s0 L) :
     ∀ (i : Nat) (s : Solver), BPre s0 s → i ≤ s.clause.size →
@@ -118,7 +118,7 @@ theorem minimizeDown_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat}
         obtain ⟨b1, b2, b3, b4⟩ := BPre.invalidate hb h t1 t2 (p := k + 1) (by omega) (t3 rfl)
         generalize ({ s' with clause := s'.clause.set! (k + 1) INVALID_LIT } : Solver) = s2 at b1 b2 b3 b4 ⊢
         obtain ⟨a1, a2, a3⟩ := ih (k + 1) (by omega) s2 b1 (by rw [b3]; omega)
-          (fun q hq => by rw [b2, if_neg (by omega)]; exact hpre q (by omega))
+          (fun q hq => by rw [b2, ite_eq_right (by omega)]; exact hpre q (by omega))
         exact ⟨a1, by rw [a2, b3], fun j hj => a3 j (b4 j (t1.rem j hj))⟩
 
 end Solver
@@ -264,15 +264,15 @@ theorem minimizeDeduced_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : N
   unfold minimizeDeduced
   split
   · rcases sortDeducedClause_spec s with ho | ⟨sh, st, e2, hin, hout⟩
-    · left; simp only; rw [if_pos ho]; exact ho
+    · left; simp only; rw [ite_eq_left ho]; exact ho
     rw [e2]
     simp only
     generalize hs2 : ({ s with clause := sh, frameUsed := st } : Solver) = s2
     have hov : s2.overflowed = s.overflowed := by rw [← hs2]
     have hcl2 : s2.clause = sh := by rw [← hs2]
     by_cases hof : s.overflowed = true
-    · left; rw [if_pos hof, hov]; exact hof
-    rw [if_neg hof]
+    · left; rw [ite_eq_left hof, hov]; exact hof
+    rw [ite_eq_right hof]
     right
     have a2 : AF s2 s0 := by rw [← hs2]; exact AF.trans_left h.af af_rfl
     have l2 : Listed s2 := by rw [← hs2]; exact hl0

@@ -53,7 +53,7 @@ def loopC (b : ByteArray) (n steps : Nat) : ByteArray × UInt32 := Id.run do
     b := wr2 b i (v + 1)
   return (b, acc)
 
-def main (args : List String) : IO Unit := do
+def main (_args : List String) : IO Unit := do
   let n := 1 <<< 22; let steps := 50000000
   let t0 ← IO.monoMsNow
   let (_, r1) := loopA (Array.replicate n 0) n steps

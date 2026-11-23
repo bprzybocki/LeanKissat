@@ -241,18 +241,18 @@ theorem just_step {Φ : (Nat → Bool) → Prop} {s0 : Solver} {i : Nat} {lit : 
     unfold PS.step at hR ⊢
     simp only at hR ⊢
     by_cases hbt : vTrue (st.a.values.get! b.toNat) = true
-    · rw [if_pos hbt]; exact hj.same rfl rfl
-    rw [if_neg hbt] at hR ⊢
+    · rw [ite_eq_left hbt]; exact hj.same rfl rfl
+    rw [ite_eq_right hbt] at hR ⊢
     have hr0 := (H.ctx.ws.refOK _ _ _ H.mem).1
     have hgeq : st.arena.garbage r = s0.arena.garbage r := by
       unfold garbage flag; rw [H.run.arena.word0 r hr0]
     by_cases hg : st.arena.garbage r = true
-    · rw [if_pos hg]; exact hj
-    rw [if_neg hg] at hR ⊢
+    · rw [ite_eq_left hg]; exact hj
+    rw [ite_eq_right hg] at hR ⊢
     have F := H.largeFacts (by rw [← hgeq]; simpa using hg)
     by_cases hot : vTrue (st.a.values.get! (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit).toNat) = true
-    · rw [if_pos hot]; exact hj.same rfl rfl
-    rw [if_neg hot] at hR ⊢
+    · rw [ite_eq_left hot]; exact hj.same rfl rfl
+    rw [ite_eq_right hot] at hR ⊢
     have SS := search_spec st.arena st.a.values r _ _ F.searched2 F.searchedLt
     simp only at SS
     generalize (if findReplacement st.arena st.a.values r (st.arena.searched r).toNat
@@ -262,12 +262,12 @@ theorem just_step {Φ : (Nat → Bool) → Prop} {s0 : Solver} {i : Nat} {lit : 
         (st.arena.searched r).toNat then findReplacement st.arena st.a.values r 2 (st.arena.searched r).toNat
       else (st.arena.size r).toNat) = R at SS hR ⊢
     by_cases hRs : R < (st.arena.size r).toNat
-    · rw [if_pos hRs] at hR ⊢; exact hj.arena H.run hR rfl
-    rw [if_neg hRs] at hR ⊢
+    · rw [ite_eq_left hRs] at hR ⊢; exact hj.arena H.run hR rfl
+    rw [ite_eq_right hRs] at hR ⊢
     have hall := SS.2 hRs
     by_cases h1 : (st.a.values.get! (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit).toNat != 0) = true
-    · rw [if_pos h1]; exact hj.same rfl rfl
-    rw [if_neg h1]
+    · rw [ite_eq_left h1]; exact hj.same rfl rfl
+    rw [ite_eq_right h1]
     have hfe := F.false_except H hall
     have hle := (le_asgAssignmentLevel st.arena st.a.aLevel
       (st.arena.lit r 0 ^^^ st.arena.lit r 1 ^^^ NOT lit) r 0 (st.arena.size r).toNat 0).2

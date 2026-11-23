@@ -216,12 +216,12 @@ theorem FInv.push {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} {m : N
     by_cases e : IDX x = IDX y
     · have := hb.false_same_var hx hy e.symm
       subst this; exact Or.inl hpos
-    · rw [if_neg e] at hya
+    · rw [ite_eq_right e] at hya
       exact (h.ana y hy hyl hya).imp_right (fun hr => hr.mono hmono)
   · rw [hab] at hi
     by_cases e : IDX x = i
     · subst e; exact ⟨x, rfl, hx, by omega⟩
-    · rw [if_neg e] at hi; exact h.anaAssigned i hi
+    · rw [ite_eq_right e] at hi; exact h.anaAssigned i hi
   · rw [h.count]
     unfold pendCount
     obtain ⟨q, hq, hqx⟩ := hpos
@@ -238,7 +238,7 @@ theorem FInv.push {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} {m : N
       have : IDX x ≠ IDX z := by
         intro e
         exact hne (hb.idx_unique (List.mem_of_mem_take hz) (List.mem_of_mem_take hmem) (by rw [IDX_NOT, e]))
-      rw [if_neg this]
+      rw [ite_eq_right this]
   · rw [pushAnalyzed_abit s _ i hsz _ (by rcases hb' with rfl | rfl | rfl <;> simp)]
     have : b ≠ ABits.analyzed := by rcases hb' with rfl | rfl | rfl <;> decide
     simp [this]; exact h.others i b hb'
@@ -422,7 +422,7 @@ theorem DBase.invalid_not_false' {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L
   simp [INVALID_LIT] at this; omega
 
 theorem FInv.lvl_one {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} {m : Nat} (hb : DBase Φ s0 1)
-    {s : Solver} {t u : Nat} (h : FInv Φ s0 c m s t u) {x : Lit} (hx : s0.IsFalse x) (h0 : s0.lvl x ≠ 0) :
+    {s : Solver} {t u : Nat} (_h : FInv Φ s0 c m s t u) {x : Lit} (hx : s0.IsFalse x) (h0 : s0.lvl x ≠ 0) :
     s0.lvl x = 1 := by
   have := hb.inv.levelOK.trueLe (NOT x) (by
     have := (hb.inv.core.valCons (NOT x)).1; rw [NOT_NOT] at this; exact this.mpr hx)
@@ -540,7 +540,7 @@ theorem walk_unit_step {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} (
     (if u == 1 then ({ s with clause := s.clause.push (NOT lit) } : Solver) else s).arena = s.arena := by
   by_cases hu1 : u = 1
   · have hb1 : (u == 1) = true := by simp [hu1]
-    repeat rw [if_pos hb1]
+    repeat rw [ite_eq_left hb1]
     have hlt : s0.IsTrue lit := hb.inv.core.trailTrue _ (List.mem_of_getElem? hp)
     have hana : anaP s0 s 1 lit = true := by
       unfold anaP; rw [hla]
@@ -574,7 +574,7 @@ theorem walk_unit_step {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} (
       · exact h.units x hx
       · simp at hx; subst hx; exact ⟨himp, hvl⟩
   · have hb1 : ¬ (u == 1) = true := by simpa using hu1
-    repeat rw [if_neg hb1]
+    repeat rw [ite_eq_right hb1]
     exact ⟨h, hun, fun _ _ => rfl, rfl, rfl⟩
 
 end Solver
@@ -738,12 +738,12 @@ theorem failedStep_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} 
   unfold failedStep
   dsimp only
   by_cases hu1 : (u == 1) = true
-  · rw [if_pos hu1] at w1 w3 ⊢
-    rw [if_pos hu1, if_pos hu1] at w2
+  · rw [ite_eq_left hu1] at w1 w3 ⊢
+    rw [ite_eq_left hu1, ite_eq_left hu1] at w2
     exact failedResolve_spec hb notFailed w1 w2 hpt hp (by unfold Solver.isAnalyzed; rw [w3]; exact hla)
       (fun q h1 h2 l hl => by unfold Solver.isAnalyzed; rw [w3]; exact hgap' q h1 h2 l hl)
-  · rw [if_neg hu1] at w1 w3 ⊢
-    rw [if_neg hu1, if_neg hu1] at w2
+  · rw [ite_eq_right hu1] at w1 w3 ⊢
+    rw [ite_eq_right hu1, ite_eq_right hu1] at w2
     exact failedResolve_spec hb notFailed w1 w2 hpt hp hla hgap'
 
 theorem failedWalk_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {c : CRef} (hb : DBase Φ s0 1)
@@ -875,8 +875,8 @@ theorem decisionsOK_congr {s t : Solver} (ht : t.asg.trail = s.asg.trail) (hr : 
     (failed : Lit) : ∀ i n, t.decisionsOK failed i n = s.decisionsOK failed i n := by
   intro i n
   fun_induction decisionsOK s failed i n with
-  | case1 i hi x ih => rw [decisionsOK, dif_pos hi, ih]; simp [reasonIdx, ht, hr, x]
-  | case2 i hi => rw [decisionsOK, dif_neg hi]
+  | case1 i hi x ih => rw [decisionsOK, dite_eq_left hi, ih]; simp [reasonIdx, ht, hr, x]
+  | case2 i hi => rw [decisionsOK, dite_eq_right hi]
 
 end Solver
 end LeanKissat

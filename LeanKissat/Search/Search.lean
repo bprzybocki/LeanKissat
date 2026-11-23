@@ -326,7 +326,7 @@ def stepBound (s : Solver) : Nat := 32 * (s.vars.toNat + 2)
   with `unknown` (flagging `overflowed`), which keeps the result sound. -/
 def searchLoop (P : Procedures) (s : Solver) (bound steps : Nat) : UInt32 × Solver :=
   if s.overflowed || s.outOfResources || s.notPorted then (0, s) else
-  if hc : s.stats.conflicts ≥ CONFLICT_CAP then (0, { s with overflowed := true }) else
+  if _hc : s.stats.conflicts ≥ CONFLICT_CAP then (0, { s with overflowed := true }) else
   match searchStep P s with
   | (some res, s') => (res, s')
   | (none, s') =>
@@ -338,7 +338,7 @@ def searchLoop (P : Procedures) (s : Solver) (bound steps : Nat) : UInt32 × Sol
 termination_by (CONFLICT_CAP.toNat - s.stats.conflicts.toNat, bound - steps)
 decreasing_by
   · apply Prod.Lex.left
-    simp only [UInt64.lt_iff_toNat_lt, UInt64.le_iff_toNat_le, Nat.not_le] at h1 hc
+    simp only [UInt64.lt_iff_toNat_lt, UInt64.le_iff_toNat_le, Nat.not_le] at h1 _hc
     omega
   · simp only [UInt64.lt_iff_toNat_lt, gt_iff_lt] at *
     have he : s'.stats.conflicts.toNat = s.stats.conflicts.toNat := by omega

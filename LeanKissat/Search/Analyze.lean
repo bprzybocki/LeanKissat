@@ -481,9 +481,9 @@ def sortRestore (levels : Array UInt32) (saved : Array UInt32) (starts : U32Vec)
 /-- The sorted copy of the deduced clause (`sort_deduced_clause`): sort literals by decreasing
   level, keeping the relative order within a level (levels are distinct, so any sort of
   `levels` gives C's result). Returns `(shadow, used counters, written positions)`. -/
-def sortShadow (s : Solver) : U32Vec × U32Vec × Array Nat :=
+def sortShadow (s : Solver) (frameUsed : U32Vec) : U32Vec × U32Vec × Array Nat :=
   let levels := (s.levels.toArray.qsort (· < ·))
-  let (starts, saved) := sortStarts levels s.frameUsed
+  let (starts, saved) := sortStarts levels frameUsed
   let n := s.clause.size
   let shadow := (U32Vec.replicate n INVALID_LIT).set! 0 (s.clause.get! 0)
   let (starts, shadow, written) := s.sortWrite starts shadow (Array.emptyWithCapacity n) 1 n
@@ -491,7 +491,11 @@ def sortShadow (s : Solver) : U32Vec × U32Vec × Array Nat :=
 
 /-- Port of `sort_deduced_clause` (analyze.c), see `sortShadow`. -/
 def sortDeducedClause (s : Solver) : Solver :=
-  let (shadow, starts, written) := s.sortShadow
+  -- Take `frameUsed` out of `s` first: `sortShadow` also reads `s`, so a shared `frameUsed`
+  -- would be copied by its first write.
+  let frameUsed := s.frameUsed
+  let s := { s with frameUsed := .empty }
+  let (shadow, starts, written) := s.sortShadow frameUsed
   sortFinish s shadow starts written
 
 /-- Port of `reset_levels` (analyze.c). -/

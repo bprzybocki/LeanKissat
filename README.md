@@ -25,7 +25,8 @@ or `bv_decide`.
   instances. Results and search statistics (conflicts, decisions, propagations, restarts,
   reductions) matched exactly. A few small, documented deviations exist where the proof
   required a runtime check (see `LeanKissat/Proofs/PROOF_PLAN.md`).
-* **Performance:** it is much slower than C Kissat, roughly 10–25× on the random instances measured.
+* **Performance:** it is much slower than C Kissat, roughly 7–10× under `--plain` on the instances
+  measured (random formulas and SAT Anniversary Track benchmarks).
 * **Input:** plain DIMACS CNF only, from a file or standard input. Compressed input
   (`.gz`, `.xz`, ...) is not supported.
 * **No proof output:** DRAT/LRAT proof output is not supported.

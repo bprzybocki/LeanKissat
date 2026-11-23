@@ -21,14 +21,15 @@ theorem sortWrite_spec (s : Solver) (n : Nat) (hn : n ≤ s.clause.size) :
     exact ⟨h1, h2⟩
   | case2 => intro h; exact ⟨rfl, h⟩
 
-theorem sortShadow_spec (s : Solver) :
-    s.sortShadow.1.size = s.clause.size ∧
-    ∀ j, j < s.clause.size → s.sortShadow.1.get! j = INVALID_LIT ∨ s.sortShadow.1.get! j ∈ s.clause.view := by
+theorem sortShadow_spec (s : Solver) (frameUsed : U32Vec) :
+    (s.sortShadow frameUsed).1.size = s.clause.size ∧
+    ∀ j, j < s.clause.size → (s.sortShadow frameUsed).1.get! j = INVALID_LIT ∨
+      (s.sortShadow frameUsed).1.get! j ∈ s.clause.view := by
   unfold sortShadow
   simp only
   have hsz : ((U32Vec.replicate s.clause.size INVALID_LIT).set! 0 (s.clause.get! 0)).size = s.clause.size := by
     simp [U32Vec.size_replicate]
-  have := sortWrite_spec s _ (Nat.le_refl _) (sortStarts (s.levels.toArray.qsort (· < ·)) s.frameUsed).1
+  have := sortWrite_spec s _ (Nat.le_refl _) (sortStarts (s.levels.toArray.qsort (· < ·)) frameUsed).1
     ((U32Vec.replicate s.clause.size INVALID_LIT).set! 0 (s.clause.get! 0)) (Array.emptyWithCapacity s.clause.size) 1
     (fun j hj => by
       rw [U32Vec.get!_set!]
@@ -75,9 +76,10 @@ theorem sortDeducedClause_spec (s : Solver) :
     s.sortDeducedClause.overflowed = true ∨
     ∃ sh st, s.sortDeducedClause = { s with clause := sh, frameUsed := st } ∧
       (∀ y ∈ sh.view, y ∈ s.clause.view) ∧ (∀ y ∈ s.clause.view, y ∈ sh.view) := by
-  obtain ⟨hsz, hsh⟩ := sortShadow_spec s
+  obtain ⟨hsz, hsh⟩ := sortShadow_spec { s with frameUsed := .empty } s.frameUsed
   unfold sortDeducedClause
-  generalize s.sortShadow = R at hsz hsh ⊢
+  dsimp only at hsz hsh ⊢
+  generalize sortShadow { s with frameUsed := .empty } s.frameUsed = R at hsz hsh ⊢
   obtain ⟨sh, st, w⟩ := R
   simp only at hsz hsh ⊢
   unfold sortFinish

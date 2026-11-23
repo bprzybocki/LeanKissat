@@ -16,6 +16,16 @@ open LeanKissat LeanKissat.Frontend
 def elapsed (start : Nat) : IO Float := do
   return ((← IO.monoNanosNow) - start).toFloat / 1.0e9
 
+/-- Wait for `t` until the monotonic clock passes `deadline` (polling every 10 ms); `none` on timeout.
+  Fuel bounds the loop: 10^9 polls are more than 300 years. -/
+def waitUntil {α} (t : Task (Except IO.Error α)) (deadline : Nat) : Nat → IO (Option α)
+  | 0 => pure none
+  | fuel + 1 => do
+    if ← IO.hasFinished t then return some (← IO.ofExcept t.get)
+    if (← IO.monoNanosNow) ≥ deadline then return none
+    IO.sleep 10
+    waitUntil t deadline fuel
+
 /-- Port of `run_application` (application.c). Returns the exit code. Specialised for
   the concrete solver so that `SolverInterface.add` is inlined into the parser loop. -/
 @[specialize] def runApplication (σ : Type) [SolverInterface σ] (args : List String) : IO UInt32 := do
@@ -70,7 +80,21 @@ def elapsed (start : Nat) : IO Float := do
     { conflicts := if app.conflicts ≥ 0 then some app.conflicts.toNat else none
       decisions := if app.decisions ≥ 0 then some app.decisions.toNat else none
       time := if app.time > 0 then some app.time else none }
-  let (res, solver) ← SolverInterface.solve r.sink limits
+  -- `--time`: C arms `alarm` and `kissat_terminate`s the search. The search here is pure, so it
+  -- runs on a dedicated thread and the main thread stops waiting at the deadline (DEVIATION:
+  -- on timeout no statistics are printed, and the process exits without the final messages).
+  let some (res, solver) ← (match limits.time with
+    | none => some <$> SolverInterface.solve r.sink limits
+    | some secs => do
+      let solveTask ← IO.asTask (SolverInterface.solve r.sink limits) .dedicated
+      let deadline := start + secs * 1000000000
+      waitUntil solveTask deadline 1000000000)
+    | do
+      p.section "result"
+      out.putStr (statusLine .unknown ++ "\n")
+      out.flush
+      p.message "terminated by time limit"
+      IO.Process.exit 0
   p.section "result"
   out.putStr (statusLine res ++ "\n")
   out.flush
@@ -81,5 +105,8 @@ def elapsed (start : Nat) : IO Float := do
   p.message s!"exit {res.code}"
   return res.code.toUInt32
 
-def main (args : List String) : IO UInt32 :=
-  runApplication LeanKissat.Solver args
+def main (args : List String) : IO UInt32 := do
+  let code ← runApplication LeanKissat.Solver args
+  -- exit explicitly: with `--time`, a solver thread may still be running
+  (← IO.getStdout).flush
+  IO.Process.exit code.toUInt8

@@ -75,6 +75,7 @@ Useful options:
 * `--plain`: the verified configuration. `--basic` is `--plain` without restarts,
   clause minimization or clause database reduction.
 * `--conflicts=N`, `--decisions=N`, `--time=SECONDS`: stop with `UNKNOWN` once the limit is reached.
+  The time limit is wall-clock time from startup. When it fires, no statistics are printed.
 * `-s` / `--statistics`: print search statistics.
 * `--relaxed` / `--strict`: change how strictly the DIMACS header is checked.
 * Individual Kissat options are accepted, for example `--restartint=10`. Changing

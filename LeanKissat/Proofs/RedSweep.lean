@@ -699,6 +699,16 @@ theorem watchBinary_watches {t u : Solver} (h : t.watches = u.watches) (a b : Li
     (t.watchBinary a b).watches = (u.watchBinary a b).watches := by
   simp only [watchBinary, watchOther, modifyWatches, h]
 
+/-- `sweepBinary` does not read `L.words`. -/
+theorem sweepBinary_words (s : Solver) (dst src : Ref) (L : SweepLits) (w : U32Vec) :
+    s.sweepBinary dst src { L with words := w } = s.sweepBinary dst src L := by
+  unfold sweepBinary; rfl
+
+/-- `sweepLarge` does not read `L.words`. -/
+theorem sweepLarge_words (s : Solver) (dst src : Ref) (newSize : Nat) (L : SweepLits) (st : SweepState)
+    (w : U32Vec) : s.sweepLarge dst src newSize { L with words := w } st = s.sweepLarge dst src newSize L st := by
+  unfold sweepLarge; rfl
+
 theorem sweepBinary_shape (s : Solver) (dst src : Ref) (L : SweepLits) :
     ∃ sc : Solver, stripS sc = stripS s ∧ sc.arena = s.arena ∧ sc.asg = s.asg ∧ sc.vars = s.vars ∧
       sc.watches = (s.watchBinary L.mfirst L.msecond).watches ∧ sc.notPorted = s.notPorted ∧
@@ -883,11 +893,13 @@ theorem sweepClause_spec {w : Solver} {start : Ref} {Q : List Ref} {s : Solver} 
   have hgA : w.arena.garbage src = false := by
     unfold garbage at *; rw [← flag_eq_of_word0 e0]; simpa using hg
   have ph := sweep_lits_phase hp hI hgA
+  rw [sweepLits_arena]
   generalize sweepLits s (litPos src 0) (s.arena.size src).toNat
     { words := (s.arena.copyWord0 st.dst src).words, qpos := litPos st.dst 0 } 0 = r at ph ⊢
   obtain ⟨sat, L⟩ := r
   obtain ⟨p1, p2, p3, p4, p5, p6, p7, p8⟩ := ph
   dsimp only at p1 p2 p3 p4 p5 p6 p7 p8 ⊢
+  simp only [sweepBinary_words, sweepLarge_words]
   have hd1 := hI.dst1
   have hd2 := hI.dst2
   have hwsz := hI.wsize
@@ -1137,9 +1149,11 @@ theorem sweepClause_np (s : Solver) (first : Ref) (st : SweepState) (src : Ref) 
   split
   · exact h
   dsimp only
+  rw [sweepLits_arena]
   generalize sweepLits s (litPos src 0) (s.arena.size src).toNat
     { words := (s.arena.copyWord0 st.dst src).words, qpos := litPos st.dst 0 } 0 = r
   obtain ⟨sat, L⟩ := r
+  simp only [sweepBinary_words, sweepLarge_words]
   cases sat
   · have hc : ((!false) = true) = True := by simp
     simp only [hc, ite_true]; split <;> exact h

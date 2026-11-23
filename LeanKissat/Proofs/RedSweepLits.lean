@@ -100,6 +100,30 @@ theorem rootT_of_rootF {s : Solver} {x : Lit} (h : s.rootF x = true) : s.rootT x
   simp only [Bool.and_eq_true, beq_iff_eq, vFalse] at h
   simp [vTrue, h.1]
 
+/-- The literal loop only reads values and levels: solvers that agree on them give the same
+  result. -/
+theorem sweepLits_congr (s t : Solver) (srcBase n : Nat) (hV : ∀ x, t.value x = s.value x)
+    (hF : ∀ x, t.rootF x = s.rootF x) (hT : ∀ x, t.rootT x = s.rootT x) :
+    ∀ (L : SweepLits) (i : Nat), sweepLits t srcBase n L i = sweepLits s srcBase n L i := by
+  intro L i
+  induction L, i using sweepLits.induct s srcBase n with
+  | case1 L i hi lit hrf ih =>
+    simp only [lit] at hrf
+    unfold sweepLits; simp only [hF, hT, hV, hi, hrf, ite_true]; exact ih
+  | case2 L i hi lit hrf hrt =>
+    simp only [lit] at hrf hrt
+    unfold sweepLits; simp only [hF, hT, hV, hi, hrf, hrt, ite_true, ite_false, Bool.false_eq_true]
+  | case3 L i hi lit tmp hrf hrt ih =>
+    simp only [lit] at hrf hrt
+    unfold sweepLits; simp only [hF, hT, hV, hi, hrf, hrt, ite_true, ite_false, Bool.false_eq_true]
+    exact ih
+  | case4 L i hi => unfold sweepLits; simp only [hi, ite_false]
+
+/-- The literal loop does not read the arena. -/
+theorem sweepLits_arena (s : Solver) (A : Arena) (srcBase n : Nat) (L : SweepLits) (i : Nat) :
+    sweepLits { s with arena := A } srcBase n L i = sweepLits s srcBase n L i :=
+  sweepLits_congr s { s with arena := A } srcBase n (fun _ => rfl) (fun _ => rfl) (fun _ => rfl) L i
+
 theorem range'_succ_eq (i m : Nat) (h : i < m) : List.range' i (m - i) = i :: List.range' (i + 1) (m - (i + 1)) := by
   rw [show m - i = (m - (i + 1)) + 1 by omega, List.range'_succ]
 

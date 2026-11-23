@@ -79,6 +79,7 @@ theorem sweepClause_incons (s : Solver) (first : Ref) (st : SweepState) (src : R
   split
   · rfl
   dsimp only
+  rw [sweepLits_arena]
   generalize sweepLits s (litPos src 0) (s.arena.size src).toNat
     { words := (s.arena.copyWord0 st.dst src).words, qpos := litPos st.dst 0 } 0 = r
   obtain ⟨sat, L⟩ := r

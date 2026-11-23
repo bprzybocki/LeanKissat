@@ -196,10 +196,16 @@ def sweepClause (s : Solver) (first : Ref) (st : SweepState) (src : Ref) : Solve
   if s.arena.garbage src then (s, st.dropLast src first) else
   let oldSize := (s.arena.size src).toNat
   let dst := st.dst
-  let a := s.arena.copyWord0 dst src
+  -- Take the arena out of `s` before writing to it: if `s` kept a reference, every write
+  -- below would copy the whole arena.
+  let a := s.arena
+  let s := { s with arena := default }
+  let a := a.copyWord0 dst src
   let r := sweepLits s (Arena.litPos src 0) oldSize { words := a.words, qpos := Arena.litPos dst 0 } 0
   let L := r.2
   let s := { s with arena := { words := L.words } }
+  -- `L.words` is the arena now; drop it from `L` so that later writes do not copy it.
+  let L := { L with words := default }
   if !r.1 then
     let s := if s.arena.redundant dst then DEC! s clauses_redundant else DEC! s clauses_irredundant
     (s, st.dropLast src first)

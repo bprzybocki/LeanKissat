@@ -24,7 +24,7 @@ theorem key_bit (w w' : UInt32) (e : (w &&& keyMask) = (w' &&& keyMask)) {bit : 
   have key : (w &&& bit = 0) ↔ (w' &&& bit = 0) := by
     simp only [keyMask, ClauseHeader.garbageBit, ClauseHeader.redundantBit,
       ClauseHeader.shrunkenBit] at e hb
-    rcases hb with rfl | rfl | rfl <;> constructor <;> intro h <;> bv_decide
+    rcases hb with rfl | rfl | rfl <;> constructor <;> intro h <;> bv_k
   cases h1 : (w &&& bit != 0) <;> cases h2 : (w' &&& bit != 0) <;> simp_all
 
 theorem flag_of_key {a b : Arena} {x : Ref} (h : (b.word0 x &&& keyMask) = (a.word0 x &&& keyMask))
@@ -156,19 +156,19 @@ theorem setWord0_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0
 theorem setGlue_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 a.sizeWards) (g : UInt32) :
     Same a (a.setGlue r g) :=
   setWord0_same h hr (by simp only [keyMask, MAX_GLUE, ClauseHeader.garbageBit,
-    ClauseHeader.redundantBit, ClauseHeader.shrunkenBit]; bv_decide)
+    ClauseHeader.redundantBit, ClauseHeader.shrunkenBit]; bv_k)
 
 theorem setUsed_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 a.sizeWards) (u : UInt32) :
     Same a (a.setUsed r u) :=
   setWord0_same h hr (by simp only [keyMask, MAX_USED, ClauseHeader.usedShift, ClauseHeader.garbageBit,
-    ClauseHeader.redundantBit, ClauseHeader.shrunkenBit]; bv_decide)
+    ClauseHeader.redundantBit, ClauseHeader.shrunkenBit]; bv_k)
 
 theorem setReason_same {a : Arena} (h : a.Layout) {r : Ref} (hr : r ∈ a.chain 0 a.sizeWards) (b : Bool) :
     Same a (a.setReason r b) := by
   apply setWord0_same h hr
   simp only [keyMask, ClauseHeader.reasonBit, ClauseHeader.garbageBit,
     ClauseHeader.redundantBit, ClauseHeader.shrunkenBit]
-  cases b <;> simp only [ite_true, ite_false, Bool.false_eq_true] <;> bv_decide
+  cases b <;> simp only [ite_true, ite_false, Bool.false_eq_true] <;> bv_k
 
 end Arena
 end LeanKissat

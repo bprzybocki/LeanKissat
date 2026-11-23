@@ -34,7 +34,7 @@ theorem IDX_impLit (l : Literal Nat) (h : l.1 < 2 ^ 31) : (IDX (impLit l)).toNat
   · rw [IDX_NOT, IDX_LIT_toNat _ (by rw [this]; exact h), this]
 
 theorem sign_LIT (x : UInt32) : (LIT x &&& 1 != 0) = false := by
-  unfold LIT; simp only [bne_eq_false_iff_eq]; bv_decide
+  unfold LIT; simp only [bne_eq_false_iff_eq]; bv_k
 
 theorem litVal_impLit (β : Nat → Bool) (l : Literal Nat) (h : l.1 < 2 ^ 31) :
     litVal β (impLit l) = (β l.1 == l.2) := by

@@ -22,7 +22,7 @@ theorem lt31 {b : UInt32} (h : b.toNat < 2 ^ 31) : b < 0x80000000 := by
   rw [UInt32.lt_iff_toNat_lt]; simpa using h
 
 theorem watchLit_lt (w : UInt32) : (watchLit w).toNat < 2 ^ 31 := by
-  have : watchLit w < 0x80000000 := by simp only [watchLit]; bv_decide
+  have : watchLit w < 0x80000000 := by simp only [watchLit]; bv_k
   rw [UInt32.lt_iff_toNat_lt] at this; simpa using this
 
 theorem parse_wf : ∀ (W : List UInt32), ∀ e ∈ parseWatches W, e.WF
@@ -50,9 +50,9 @@ theorem parse_encode : ∀ (E : List WEntry), (∀ e ∈ E, e.WF) →
     have hb := lt31 (h (.bin b) (List.mem_cons_self ..))
     obtain ⟨ih1, ih2⟩ := parse_encode E (fun e he => h e (List.mem_cons_of_mem _ he))
     have h1 : watchIsBinary (binaryWatch b) = true := by
-      simp only [watchIsBinary, binaryWatch, WATCH_BINARY_BIT, bne_iff_ne, ne_eq]; bv_decide
+      simp only [watchIsBinary, binaryWatch, WATCH_BINARY_BIT, bne_iff_ne, ne_eq]; bv_k
     have h2 : watchLit (binaryWatch b) = b := by
-      simp only [watchLit, binaryWatch, WATCH_BINARY_BIT]; bv_decide
+      simp only [watchLit, binaryWatch, WATCH_BINARY_BIT]; bv_k
     have e : encodeWatches (.bin b :: E) = binaryWatch b :: encodeWatches E := rfl
     rw [e]
     constructor
@@ -64,13 +64,13 @@ theorem parse_encode : ∀ (E : List WEntry), (∀ e ∈ E, e.WF) →
     have hr := lt31 hr
     obtain ⟨ih1, ih2⟩ := parse_encode E (fun e he => h e (List.mem_cons_of_mem _ he))
     have h1 : watchIsBinary (blockingWatch b) = false := by
-      simp only [watchIsBinary, blockingWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_decide
+      simp only [watchIsBinary, blockingWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_k
     have h2 : watchLit (blockingWatch b) = b := by
-      simp only [watchLit, blockingWatch]; bv_decide
+      simp only [watchLit, blockingWatch]; bv_k
     have h3 : watchIsBinary (largeWatch r) = false := by
-      simp only [watchIsBinary, largeWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_decide
+      simp only [watchIsBinary, largeWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_k
     have h4 : watchRef (largeWatch r) = r := by
-      simp only [watchRef, largeWatch]; bv_decide
+      simp only [watchRef, largeWatch]; bv_k
     have e : encodeWatches (.large b r :: E) = blockingWatch b :: largeWatch r :: encodeWatches E := rfl
     rw [e]
     constructor

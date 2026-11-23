@@ -144,7 +144,7 @@ theorem assign_values_var (a : Asg) (probing : Bool) (k : UInt32) (bb : Bool) (x
     (hsz : x.toNat < a.values.size) (hsz' : (NOT x).toNat < a.values.size) :
     (a.assign probing k bb x rr).values.get! (2 * (IDX x).toNat) ≠ 0 := by
   rw [Asg.assign_values_get! _ _ _ _ _ _ _ hsz' hsz]
-  have key : IDX x * 2 = x ∨ IDX x * 2 = NOT x := by unfold IDX NOT; bv_decide
+  have key : IDX x * 2 = x ∨ IDX x * 2 = NOT x := by unfold IDX NOT; bv_k
   have hm : (IDX x * 2).toNat = 2 * (IDX x).toNat := by
     rw [UInt32.toNat_mul]; have := IDX_toNat x; have := x.toNat_lt; simp; omega
   rw [← hm]
@@ -243,7 +243,7 @@ theorem delayedAt_eq (dl : List (Lit × Lit × Ref)) (l : Lit) : delayedAt dl l.
     simp [h, this]
 
 theorem blockingWatch_idem (x : Lit) : blockingWatch (watchLit (blockingWatch x)) = blockingWatch x := by
-  simp only [blockingWatch, watchLit]; bv_decide
+  simp only [blockingWatch, watchLit]; bv_k
 
 theorem wld_spec (d : U32Vec) (wss : Array WVec) (k : Nat) :
     ∀ dl, d.view.drop k = flatDelayed dl → (∀ x ∈ dl, x.1.toNat < wss.size) →

@@ -32,9 +32,9 @@ theorem setABit_af (s : Solver) (idx : UInt32) (b : UInt8) (on : Bool) (hb : b &
   split
   · split
     · simp only [ABits.binary] at hb ⊢
-      generalize s.asg.aBits.get! i = w; revert hb; generalize b = b'; intro hb; bv_decide
+      generalize s.asg.aBits.get! i = w; revert hb; generalize b = b'; intro hb; bv_k
     · simp only [ABits.binary] at hb ⊢
-      generalize s.asg.aBits.get! i = w; revert hb; generalize b = b'; intro hb; bv_decide
+      generalize s.asg.aBits.get! i = w; revert hb; generalize b = b'; intro hb; bv_k
   · rfl
 
 theorem analyzed_bin : ABits.analyzed &&& ABits.binary = 0 := by decide
@@ -43,13 +43,13 @@ theorem removable_bin : ABits.removable &&& ABits.binary = 0 := by decide
 theorem shrinkable_bin : ABits.shrinkable &&& ABits.binary = 0 := by decide
 
 theorem u8_or_and_self (w c : UInt8) (hc : c ≠ 0) : ((w ||| c) &&& c != 0) = true := by
-  simp only [bne_iff_ne, ne_eq]; intro h; apply hc; bv_decide
+  simp only [bne_iff_ne, ne_eq]; intro h; apply hc; bv_k
 theorem u8_andnot_and_self (w c : UInt8) : ((w &&& ~~~c) &&& c != 0) = false := by
-  simp only [bne_eq_false_iff_eq]; bv_decide
+  simp only [bne_eq_false_iff_eq]; bv_k
 theorem u8_or_and_other (w b c : UInt8) (h : b &&& c = 0) : ((w ||| b) &&& c) = (w &&& c) := by
-  bv_decide
+  bv_k
 theorem u8_andnot_and_other (w b c : UInt8) (h : b &&& c = 0) : ((w &&& ~~~b) &&& c) = (w &&& c) := by
-  bv_decide
+  bv_k
 
 /-- The value of an analysis bit after setting a (possibly different) bit. -/
 theorem abit_setABit (s : Solver) (idx i : UInt32) (b c : UInt8) (on : Bool)

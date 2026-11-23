@@ -13,10 +13,10 @@ Failures are saved (CNF + both outputs + info.json) to the failures
 directory and can optionally be delta-debugged ('--minimize').
 
 Examples:
-  python3 -I difftest.py --count 200 --family mix --jobs 8
-  python3 -I difftest.py --candidate ../.lake/build/bin/leankissat \\
+  python3 -I scripts/difftest.py --count 200 --family mix --jobs 8
+  python3 -I scripts/difftest.py --candidate .lake/build/bin/lkissat \\
           --opts '' --opts '--plain' --count 100
-  python3 -I difftest.py --files ../../kissat/test/cnf/*.cnf --opts '--sat'
+  python3 -I scripts/difftest.py --files path/to/cnfs/*.cnf --opts '--sat'
 """
 
 import argparse
@@ -37,8 +37,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cnfgen  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_REFERENCE = os.path.normpath(os.path.join(
-    HERE, "..", "..", "kissat", "build", "kissat"))
+# reference C kissat 4.0.4 binary: $KISSAT, else `kissat` on PATH
+DEFAULT_REFERENCE = os.environ.get("KISSAT", "kissat")
 DEFAULT_FAILURES = os.path.normpath(os.path.join(HERE, "..", "test", "failures"))
 DEFAULT_COUNTERS = ["conflicts", "decisions", "propagations", "restarts",
                     "reductions"]

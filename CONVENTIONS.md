@@ -1,6 +1,6 @@
 # Porting conventions (Kissat 4.0.4 → Lean 4.36)
 
-Reference C sources: `../kissat/src`. Target = default release build
+Reference C sources: `src/` of Kissat 4.0.4 (https://github.com/arminbiere/kissat, tag `rel-4.0.4`). Target = default release build
 (`./configure && make`: `-DNDEBUG`, no `LOGGING`, not `QUIET`, no `EMBEDDED`,
 no `STATISTICS`/`METRICS`). Code under `#ifndef NDEBUG`, `LOGGING`, `METRICS`,
 `COVERAGE`, `#if 0`, proof (`proof.c`) and checker (`check.c`) is not ported.

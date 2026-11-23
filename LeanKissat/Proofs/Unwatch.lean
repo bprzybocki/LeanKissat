@@ -42,15 +42,15 @@ theorem take_set_two {α : Type} (L : List α) (q : Nat) (v u : α) (hq : q + 1 
 
 theorem blocking_not_binary (b : Lit) (hb : b.toNat < 2 ^ 31) : watchIsBinary (blockingWatch b) = false := by
   have := lt31 hb
-  simp only [watchIsBinary, blockingWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_decide
+  simp only [watchIsBinary, blockingWatch, WATCH_BINARY_BIT, bne_eq_false_iff_eq]; bv_k
 
 theorem binary_is_binary (b : Lit) (hb : b.toNat < 2 ^ 31) : watchIsBinary (binaryWatch b) = true := by
   have := lt31 hb
-  simp only [watchIsBinary, binaryWatch, WATCH_BINARY_BIT, bne_iff_ne, ne_eq]; bv_decide
+  simp only [watchIsBinary, binaryWatch, WATCH_BINARY_BIT, bne_iff_ne, ne_eq]; bv_k
 
 theorem largeWatch_eq (r : Ref) (hr : r.toNat < 2 ^ 31) : largeWatch r = r := by
   have := lt31 hr
-  simp only [largeWatch]; bv_decide
+  simp only [largeWatch]; bv_k
 
 theorem removeBlockingLoop_size (ref : Ref) : ∀ (ws : WVec) (p q : Nat), q ≤ p →
     (removeBlockingLoop ws ref p q).size = ws.size := by

@@ -8,7 +8,7 @@
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
-KSRC=${KISSAT_SRC:-$ROOT/../kissat/src}
+KSRC=${KISSAT_SRC:?set KISSAT_SRC to the src/ directory of a Kissat 4.0.4 checkout}
 BUILD="$ROOT/.lake/build/sorttest-c"
 rm -rf "$BUILD"
 mkdir -p "$BUILD"

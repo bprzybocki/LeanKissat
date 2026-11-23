@@ -2,8 +2,8 @@
 
 All scripts are Python 3 standard library only and are meant to be run as
 `python3 -I scripts/<name>.py ...` (they add their own directory to
-`sys.path`, so `-I` is fine). Paths default to the reference binary
-`../kissat/build/kissat` (relative to `LeanKissat/`).
+`sys.path`, so `-I` is fine). The reference solver defaults to
+`$KISSAT` if set, else `kissat` on `PATH` (a build of C Kissat 4.0.4).
 
 ## cnfgen.py: random CNF generator
 
@@ -50,7 +50,7 @@ python3 -I scripts/difftest.py --candidate .lake/build/bin/leankissat \
     --opts= --opts=--plain --opts=--sat --opts=--unsat --opts=--no-simplify
 
 # given files or directories
-python3 -I scripts/difftest.py --candidate ... --files ../kissat/test/cnf --opts=--basic
+python3 -I scripts/difftest.py --candidate ... --files path/to/cnfs --opts=--basic
 
 # minimize failures
 python3 -I scripts/difftest.py --candidate ... --count 100 --minimize --max-failures 3
@@ -99,29 +99,3 @@ Use it to check the checker and the minimizer:
 python3 -I scripts/difftest.py --count 12 --minimize --max-failures 2 \
     --candidate "python3 -I scripts/testing/fake_candidate.py --fake=crash"
 ```
-
-## bench.py: benchmark runs and comparison
-
-```sh
-python3 -I scripts/bench.py run --dir ../benchmarks/anni --timeout 300 --jobs 4 --out ref.csv
-python3 -I scripts/bench.py run --solver .lake/build/bin/leankissat --options=--sat \
-    --dir ../benchmarks/anni --timeout 300 --out lean.csv --resume
-python3 -I scripts/bench.py compare ref.csv lean.csv [--all] [--top 20]
-```
-
-`run` writes one CSV row per file with these columns: `file`, `status`
-(SAT, UNSAT, UNKNOWN, TIMEOUT, CRASH, ERROR, or WRONG for an invalid
-witness), `exit`, `time` (wall seconds), `conflicts`, `decisions`,
-`propagations`, `timeout` and `options`. It passes `--statistics` and `-n`.
-`--check` validates witnesses instead of passing `-n`. `.gz`, `.xz` and
-`.bz2` inputs work. `--resume` appends to an existing CSV and skips files
-it already contains.
-
-`compare` prints:
-
-* SAT/UNSAT disagreements and WRONG/CRASH/ERROR rows at the top, marked with `!!!`. The exit status is then 3.
-* Solved counts and PAR-2. The timeout is read from the CSV, or set with `--timeout`.
-* Instances solved by only one side.
-* The geometric mean, minimum and maximum of the per-instance time ratio.
-* How many instances have identical conflict counts.
-* The largest slowdowns.

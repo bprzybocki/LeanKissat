@@ -1,4 +1,4 @@
-import Std.Tactic.BVDecide
+import LeanKissat.Util.BitTac
 
 /-
 Packed growable vectors of `UInt32`, stored little-endian in a `ByteArray`.
@@ -36,7 +36,7 @@ theorem ByteArray.getElem_push' (as : ByteArray) (a : UInt8) (j : Nat)
 
 theorem decode32_encode (v : UInt32) :
     decode32 v.toUInt8 (v >>> 8).toUInt8 (v >>> 16).toUInt8 (v >>> 24).toUInt8 = v := by
-  simp only [decode32]; bv_decide
+  simp only [decode32]; bv_k
 
 structure U32Vec where
   data : ByteArray

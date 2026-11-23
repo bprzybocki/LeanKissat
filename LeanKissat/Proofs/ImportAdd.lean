@@ -108,7 +108,7 @@ theorem LitPhase.step {F : CNF Nat} {base s : Solver} {P : List (Literal Nat)} (
   have hnxlt := validLit_lt (validLit_not hxv)
   have hcore := hb.search.inv.core
   have hmsz : 2 * base.vars.toNat ≤ s.marks.size := by rw [h.msize]; exact hb.marksSize
-  have hxx : x ≠ NOT x := by intro e; have := congrArg (· &&& 1) e; simp [NOT] at this; bv_decide
+  have hxx : x ≠ NOT x := by intro e; have := congrArg (· &&& 1) e; simp [NOT] at this; bv_k
   have toN : ∀ a b : Lit, a.toNat = b.toNat → a = b := fun a b e => UInt32.toNat_inj.mp e
   -- the value of `x` and its level
   have hval : s.value x = base.asg.values.get! x.toNat := by unfold value; rw [ea]
@@ -596,7 +596,7 @@ theorem Quiet.symm' {t s : Solver} (h : Quiet t s) : Quiet s t :=
 
 theorem assigned_of_var {s : Solver} (hc : s.Core) (x : Lit) (h : s.asg.values.get! (2 * (IDX x).toNat) ≠ 0) :
     s.IsTrue x ∨ s.IsFalse x := by
-  have key : IDX x * 2 = x ∨ IDX x * 2 = NOT x := by unfold IDX NOT; bv_decide
+  have key : IDX x * 2 = x ∨ IDX x * 2 = NOT x := by unfold IDX NOT; bv_k
   have hm : (IDX x * 2).toNat = 2 * (IDX x).toNat := by
     rw [UInt32.toNat_mul]; have := IDX_toNat x; have := x.toNat_lt; simp; omega
   rw [← hm] at h

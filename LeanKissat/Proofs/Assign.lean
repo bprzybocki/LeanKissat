@@ -53,8 +53,8 @@ theorem IDX_eq_iff (a b : Lit) : IDX a = IDX b ↔ a = b ∨ a = NOT b := by
   · intro h
     by_cases e : a = b
     · exact Or.inl e
-    · right; bv_decide
-  · rintro (rfl | rfl) <;> bv_decide
+    · right; bv_k
+  · rintro (rfl | rfl) <;> bv_k
 
 theorem NOT_inj {a b : Lit} (h : NOT a = NOT b) : a = b := by
   have := congrArg NOT h; simpa [NOT_NOT] using this

@@ -151,9 +151,16 @@ theorem alloc_flags (red : Bool) (glue : UInt32) :
       ClauseHeader.garbageBit) = 0 := by
   cases red <;> simp only [ite_true, Bool.false_eq_true, ite_false]
   · decide
-  · unfold MAX_GLUE ClauseHeader.shrunkenBit ClauseHeader.garbageBit ClauseHeader.redundantBit
-    rw [UInt32.min_def]
-    constructor <;> bv_decide
+  · have hm : (min MAX_GLUE glue).toNat < 2 ^ 19 := by
+      rw [UInt32.min_def]; split
+      · decide
+      · rename_i h; simp only [MAX_GLUE, UInt32.le_iff_toNat_le] at h; simp only [UInt32.reduceShiftLeft,
+          UInt32.reduceSub, UInt32.reduceToNat] at h; omega
+    generalize min MAX_GLUE glue = m at hm ⊢
+    have b19 : m.toBitVec.getLsbD 19 = false := Nat.testBit_lt_two_pow (by simpa using hm)
+    have b23 : m.toBitVec.getLsbD 23 = false := Nat.testBit_lt_two_pow (by simp; omega)
+    unfold ClauseHeader.shrunkenBit ClauseHeader.garbageBit ClauseHeader.redundantBit
+    constructor <;> bv_k
 
 theorem Alloc.oldReads {a b : Arena} {r : Ref} {red : Bool} {glue : UInt32} {lits : U32Vec}
     (h : Alloc a b r red glue lits) (hl : a.Layout) {x : Ref} (hx : x ∈ a.chain 0 a.sizeWards) :

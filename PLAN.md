@@ -15,7 +15,7 @@
 * Resource exhaustion (arena capacity, fresh variables) is an explicit result, separate
   from SAT/UNSAT/unknown.
 
-Target: Kissat 4.0.4 (`../kissat`, ~39K lines C, 206 files) → Lean 4.36.0, no `unsafe`,
+Target: Kissat 4.0.4 (~39K lines C, 206 files) → Lean 4.36.0, no `unsafe`,
 no `partial`, no `implemented_by`/`@[extern]`, with soundness proofs against `Std.Sat.CNF`.
 
 ## 1. What Kissat is (as relevant to the port)
@@ -99,7 +99,7 @@ technique's soundness reduces to: "this step is a valid DRAT-with-witness step".
 
 ## 4. Testing & performance
 
-* Build reference Kissat from `../kissat` (`./configure && make`) — plus a variant with
+* Build reference Kissat 4.0.4 (`./configure && make`) — plus a variant with
   the same options defaults — for differential testing.
 * **Differential fuzzing:** random CNF generators (uniform k-SAT near threshold,
   structured generators, `cnfuzz`-style), compare result, model validity, and the

@@ -10,8 +10,8 @@ namespace LeanKissat
 namespace Solver
 open Arena
 
-theorem xor_self_left (a b : UInt32) : a ^^^ b ^^^ a = b := by bv_decide
-theorem xor_self_right (a b : UInt32) : a ^^^ b ^^^ b = a := by bv_decide
+theorem xor_self_left (a b : UInt32) : a ^^^ b ^^^ a = b := by bv_k
+theorem xor_self_right (a b : UInt32) : a ^^^ b ^^^ b = a := by bv_k
 
 theorem isTrue_iff_vTrue (s : Solver) (l : Lit) :
     s.IsTrue l ↔ vTrue (s.asg.values.get! l.toNat) = true := by

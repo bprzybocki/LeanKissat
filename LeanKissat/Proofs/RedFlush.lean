@@ -46,15 +46,15 @@ def flushKeep (s : Solver) (litFixed : Value) (start : Ref) : WEntry → Bool
 
 theorem watchRef_largeWatch (r : Ref) (hr : r.toNat < 2 ^ 31) : watchRef (largeWatch r) = r := by
   have := lt31 hr
-  simp only [watchRef, largeWatch]; bv_decide
+  simp only [watchRef, largeWatch]; bv_k
 
 theorem watchLit_blocking (b : Lit) (hb : b.toNat < 2 ^ 31) : watchLit (blockingWatch b) = b := by
   have := lt31 hb
-  simp only [watchLit, blockingWatch]; bv_decide
+  simp only [watchLit, blockingWatch]; bv_k
 
 theorem watchLit_binary (b : Lit) (hb : b.toNat < 2 ^ 31) : watchLit (binaryWatch b) = b := by
   have := lt31 hb
-  simp only [watchLit, binaryWatch, WATCH_BINARY_BIT]; bv_decide
+  simp only [watchLit, binaryWatch, WATCH_BINARY_BIT]; bv_k
 
 theorem wvec_push_toList (w : WVec) (x : UInt32) : (w.push x).data.toList = w.data.toList ++ [x] := by
   simp [WVec.push]

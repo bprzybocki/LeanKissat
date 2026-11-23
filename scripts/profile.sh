@@ -1,14 +1,16 @@
 #!/bin/sh
-# usage: prof.sh <cnf> [opts]; prints top self-time functions and alloc parents
-cd /Users/benprz/Documents/kissat_lean/LeanKissat
-f=$1; shift
+# usage: scripts/profile.sh <cnf> [opts]; prints top self-time functions and alloc parents
+f=$(cd "$(dirname "$1")" && pwd)/$(basename "$1"); shift
+cd "$(dirname "$0")/.."
+T=$(mktemp -d)
 ./.lake/build/bin/lkissat "$@" -q -n $f > /dev/null & PID=$!
-sleep 2; sample $PID 5 1 -f /tmp/prof.sample > /dev/null 2>&1; kill $PID
-grep -A25 "Sort by top of stack" /tmp/prof.sample | tail -24 | sed 's/(in lkissat)//; s/lp_LeanKissat_LeanKissat_//; s/___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanKissat_/forIn:/'
-awk '/Call graph:/,/Total number in stack/' /tmp/prof.sample > /tmp/cg.txt
-python3 - <<'PY'
+sleep 2; sample $PID 5 1 -f $T/prof.sample > /dev/null 2>&1; kill $PID
+grep -A25 "Sort by top of stack" $T/prof.sample | tail -24 | sed 's/(in lkissat)//; s/lp_LeanKissat_LeanKissat_//; s/___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanKissat_/forIn:/'
+awk '/Call graph:/,/Total number in stack/' $T/prof.sample > $T/cg.txt
+CG=$T/cg.txt python3 - <<'PY'
 import re
-lines=open('/tmp/cg.txt').read().split('\n')
+import os
+lines=open(os.environ['CG']).read().split('\n')
 stack=[]; agg={}
 for l in lines:
     m=re.match(r'^([\s!:|+]*)(\d+)\s+(\S+)',l)
@@ -21,3 +23,4 @@ for l in lines:
     stack.append((ind,name))
 for k,v in sorted(agg.items(),key=lambda x:-x[1])[:8]: print(v,k[0],k[1].replace('lp_LeanKissat_LeanKissat_',''))
 PY
+rm -rf "$T"

@@ -1,4 +1,4 @@
-import Std.Tactic.BVDecide
+import LeanKissat.Util.BitTac
 /-
 Literals, values and basic constants (`literal.h`, `value.h`, `reference.h`,
 `assign.h`, `utilities.h`).
@@ -35,10 +35,10 @@ theorem NOT_NOT (l : Lit) : NOT (NOT l) = l := by
   simp [NOT, UInt32.xor_assoc]
 
 theorem NOT_ne (l : Lit) : NOT l ≠ l := by
-  simp only [NOT, ne_eq]; bv_decide
+  simp only [NOT, ne_eq]; bv_k
 
 theorem IDX_NOT (l : Lit) : IDX (NOT l) = IDX l := by
-  simp only [IDX, NOT]; bv_decide
+  simp only [IDX, NOT]; bv_k
 
 /-- C `signed char` values stored in a `ByteArray`: `1` true, `0xFF` (-1) false,
   `0` unassigned. -/

@@ -16,9 +16,9 @@ def litVal (β : Nat → Bool) (l : Lit) : Bool := β (IDX l).toNat ^^ (l &&& 1 
 theorem sign_NOT (l : Lit) : ((NOT l) &&& 1 != 0) = !(l &&& 1 != 0) := by
   simp only [NOT]
   by_cases h : l &&& 1 = 0
-  · have : (l ^^^ 1) &&& 1 = 1 := by bv_decide
+  · have : (l ^^^ 1) &&& 1 = 1 := by bv_k
     simp [h, this]
-  · have : (l ^^^ 1) &&& 1 = 0 := by bv_decide
+  · have : (l ^^^ 1) &&& 1 = 0 := by bv_k
     simp [h, this]
 
 theorem litVal_NOT (β : Nat → Bool) (l : Lit) : litVal β (NOT l) = !litVal β l := by
@@ -239,7 +239,7 @@ theorem assign_reasonOf_self (h : s.ReasonSizes) (hl : s.ValidLit lit) (hk : lev
   rw [U32Vec.get!_set!_self _ _ _ this]
   have : (level == 0) = false := by simpa using hk
   simp only [this]
-  bv_decide
+  bv_k
 
 theorem assign_binOf_self (h : s.ReasonSizes) (hl : s.ValidLit lit) (hk : level ≠ 0) :
     (s.withAssign probing level binary lit reason).binOf lit = binary := by

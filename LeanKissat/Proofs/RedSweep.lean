@@ -408,7 +408,7 @@ theorem abit_or_binary (v : UInt8) (b : UInt8) (hb : AnaBit b) :
   have key : ((v ||| ABits.binary) &&& b = 0) ↔ (v &&& b = 0) := by
     rcases hb with rfl | rfl | rfl | rfl <;>
       simp only [ABits.analyzed, ABits.binary, ABits.poisoned, ABits.removable, ABits.shrinkable] <;>
-      constructor <;> intro h <;> bv_decide
+      constructor <;> intro h <;> bv_k
   cases h1 : ((v ||| ABits.binary) &&& b != 0) <;> cases h2 : (v &&& b != 0) <;> simp_all
 
 /-- No true literal has the clause at `src` as large reason. -/
@@ -454,7 +454,7 @@ theorem moveAsg_reads {s t : Solver} {f : Lit} {y : UInt32} {binary : Bool} (h :
       cases binary
       · simp [e]
       · simp only [true_and, e, ite_true, Bool.true_or]
-        have : (s.abits (IDX f) ||| ABits.binary) &&& ABits.binary = 2 := by unfold ABits.binary; bv_decide
+        have : (s.abits (IDX f) ||| ABits.binary) &&& ABits.binary = 2 := by unfold ABits.binary; bv_k
         rw [this]; decide
     · rw [if_neg e, if_neg (fun h => e h.1)]
   · rw [hbit]
@@ -813,13 +813,13 @@ theorem flags_clear_shrunken (w : UInt32) :
   simp only [ClauseHeader.shrunkenBit, ClauseHeader.redundantBit, ClauseHeader.garbageBit, ClauseHeader.reasonBit]
   have k : ∀ (x y : UInt32), (x = 0 ↔ y = 0) → (x != 0) = (y != 0) := by
     intro x y h; cases h1 : (x != 0) <;> cases h2 : (y != 0) <;> simp_all
-  refine ⟨k _ _ (by constructor <;> intro h <;> bv_decide), k _ _ (by constructor <;> intro h <;> bv_decide), ?_,
-    k _ _ (by constructor <;> intro h <;> bv_decide), k _ _ (by constructor <;> intro h <;> bv_decide),
-    k _ _ (by constructor <;> intro h <;> bv_decide), ?_⟩
-  · have : (w &&& ~~~((1 : UInt32) <<< 23)) &&& ((1 : UInt32) <<< 23) = 0 := by bv_decide
+  refine ⟨k _ _ (by constructor <;> intro h <;> bv_k), k _ _ (by constructor <;> intro h <;> bv_k), ?_,
+    k _ _ (by constructor <;> intro h <;> bv_k), k _ _ (by constructor <;> intro h <;> bv_k),
+    k _ _ (by constructor <;> intro h <;> bv_k), ?_⟩
+  · have : (w &&& ~~~((1 : UInt32) <<< 23)) &&& ((1 : UInt32) <<< 23) = 0 := by bv_k
     rw [this]; rfl
   · have : ((w &&& ~~~((1 : UInt32) <<< 23)) &&& ~~~((1 : UInt32) <<< 21)) &&& ((1 : UInt32) <<< 23) = 0 := by
-      bv_decide
+      bv_k
     rw [this]; rfl
 
 theorem asg_frame_trans {t s w : Asg} (h1 : t = { s with aReason := t.aReason, aBits := t.aBits })

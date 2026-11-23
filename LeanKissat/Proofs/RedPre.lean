@@ -104,9 +104,9 @@ theorem reasonBit_set (w : UInt32) (m : Bool) :
       = m := by
   unfold ClauseHeader.reasonBit
   cases m
-  · have : (w &&& ~~~((1 : UInt32) <<< 21)) &&& ((1 : UInt32) <<< 21) = 0 := by bv_decide
+  · have : (w &&& ~~~((1 : UInt32) <<< 21)) &&& ((1 : UInt32) <<< 21) = 0 := by bv_k
     simp only [Bool.false_eq_true, ite_false, this]; decide
-  · have : (w ||| ((1 : UInt32) <<< 21)) &&& ((1 : UInt32) <<< 21) = (1 : UInt32) <<< 21 := by bv_decide
+  · have : (w ||| ((1 : UInt32) <<< 21)) &&& ((1 : UInt32) <<< 21) = (1 : UInt32) <<< 21 := by bv_k
     simp only [ite_true, this]; decide
 
 theorem setReason_reason (a : Arena) (h : a.Layout) {r x : Ref} (hr : r ∈ a.chain 0 a.sizeWards)
@@ -246,7 +246,7 @@ theorem setUsed_reason (a : Arena) (h : a.Layout) {c x : Ref} (hc : c ∈ a.chai
     rw [U32Vec.get!_set!_self _ _ _ (by unfold base; omega)]
     have key : ∀ (w : UInt32), ((w &&& ((1 <<< ClauseHeader.usedShift) - 1)) |||
         ((u &&& MAX_USED) <<< ClauseHeader.usedShift)) &&& ClauseHeader.reasonBit = w &&& ClauseHeader.reasonBit := by
-      intro w; simp only [ClauseHeader.usedShift, MAX_USED, ClauseHeader.reasonBit]; bv_decide
+      intro w; simp only [ClauseHeader.usedShift, MAX_USED, ClauseHeader.reasonBit]; bv_k
     rw [key]
   · show ((a.words.set! (base c) _).get! (base x) &&& _ != 0) = (a.word0 x &&& _ != 0)
     rw [U32Vec.get!_set!_ne _ _ _ _ ((header_ne h hc hx).2.2.2 (Ne.symm e))]
@@ -384,9 +384,9 @@ theorem garbage_or_flags (w : UInt32) :
   simp only [ClauseHeader.shrunkenBit, ClauseHeader.redundantBit, ClauseHeader.garbageBit, ClauseHeader.reasonBit]
   have k : ∀ (x y : UInt32), (x = 0 ↔ y = 0) → (x != 0) = (y != 0) := by
     intro x y h; cases h1 : (x != 0) <;> cases h2 : (y != 0) <;> simp_all
-  refine ⟨k _ _ (by constructor <;> intro h <;> bv_decide), k _ _ (by constructor <;> intro h <;> bv_decide),
-    k _ _ (by constructor <;> intro h <;> bv_decide), ?_, by bv_decide⟩
-  have : (w ||| ((1 : UInt32) <<< 19)) &&& ((1 : UInt32) <<< 19) = (1 : UInt32) <<< 19 := by bv_decide
+  refine ⟨k _ _ (by constructor <;> intro h <;> bv_k), k _ _ (by constructor <;> intro h <;> bv_k),
+    k _ _ (by constructor <;> intro h <;> bv_k), ?_, by bv_k⟩
+  have : (w ||| ((1 : UInt32) <<< 19)) &&& ((1 : UInt32) <<< 19) = (1 : UInt32) <<< 19 := by bv_k
   rw [this]; decide
 
 section G

@@ -379,13 +379,13 @@ theorem markRemovedLiteral_flags (s : Solver) (lit : Lit) :
     · simp only [setVarFlag]; rw [U32Vec.get!_set!_ne _ _ _ _ (Ne.symm hj)]
     · simp only [isActive, varFlags, setVarFlag] at h ⊢
       rw [U32Vec.get!_set!]; split
-      · simp only [ite_true]; revert h; generalize s.flags.get! (IDX lit).toNat = w; intro h; simp at h ⊢; bv_decide
+      · simp only [ite_true]; revert h; generalize s.flags.get! (IDX lit).toNat = w; intro h; simp at h ⊢; bv_k
       · exact h
   · exact ⟨AFr.refl _, rfl, fun _ _ => rfl, id⟩
 
 theorem or_active (w b : UInt32) (h : (w &&& VarFlags.active != 0) = true) :
     ((w ||| b) &&& VarFlags.active != 0) = true := by
-  simp only [bne_iff_ne, ne_eq] at *; intro e; apply h; revert e; unfold VarFlags.active; bv_decide
+  simp only [bne_iff_ne, ne_eq] at *; intro e; apply h; revert e; unfold VarFlags.active; bv_k
 
 theorem markFlagBit_get (p : U32Vec × Counters) (i : Nat) (bit : UInt32) (c : Nat) (j : Nat) :
     ((markFlagBit p i bit c).1.get! j = p.1.get! j ∨ j = i) ∧
@@ -440,7 +440,7 @@ theorem activateCore_spec (s : Solver) (idx : UInt32) (hfs : idx.toNat < s.flags
   refine ⟨ha, hu, ?_, fun j hj => ?_⟩
   · unfold isActive varFlags; rw [hf]; simp only [setVarFlag, varFlags, ite_true]
     rw [U32Vec.get!_set!]; split
-    · simp only [bne_iff_ne, ne_eq]; unfold VarFlags.active; generalize s.flags.get! idx.toNat = w; bv_decide
+    · simp only [bne_iff_ne, ne_eq]; unfold VarFlags.active; generalize s.flags.get! idx.toNat = w; bv_k
     · rename_i hn; exfalso; apply hn; exact ⟨rfl, hfs⟩
   · rw [hf]; simp only [setVarFlag]; exact U32Vec.get!_set!_ne _ _ _ _ (Ne.symm hj)
 
@@ -454,7 +454,7 @@ theorem activateLiteral_spec (s : Solver) (idx : UInt32) (hidx : idx.toNat < 2 ^
   unfold activateLiteral
   rw [hI, if_neg (by simp [hna])]
   have hS : IDX (STRIP (LIT idx)) = idx := by
-    unfold STRIP; rw [show LIT idx &&& ~~~1 = LIT idx by unfold LIT; bv_decide]; exact hI
+    unfold STRIP; rw [show LIT idx &&& ~~~1 = LIT idx by unfold LIT; bv_k]; exact hI
   obtain ⟨h1, h2, h3, h4⟩ := activateCore_spec s idx hfs
   generalize s.activateCore idx = X at h1 h2 h3 h4
   obtain ⟨r1, r2, r3, r4⟩ := markRemovedLiteral_flags X (STRIP (LIT idx))
@@ -672,7 +672,7 @@ theorem init_reserve_spec (opts : Options) (n : Nat) (hn : n < 2 ^ 30) (ht : opt
   obtain ⟨z1, z2⟩ := m1b (by omega)
   obtain ⟨e1, e2⟩ := m1c (v + 1) (by omega) (by omega)
   refine ⟨by rw [a1.importLit, z1]; omega, ?_, ?_, ?_⟩
-  · rw [a1.importLit, e1]; simp only [Nat.add_sub_cancel]; unfold LIT; bv_decide
+  · rw [a1.importLit, e1]; simp only [Nat.add_sub_cancel]; unfold LIT; rw [UInt32.mul_comm, BitTac.u32_mul_two]
   · rw [a1.importBits, e2]; decide
   · rw [a1.importBits, e2]; decide
 
@@ -733,7 +733,7 @@ theorem alloc_redundant {a b : Arena} {r : Ref} {red : Bool} {glue : UInt32} {li
   · simp [ClauseHeader.redundantBit]
   · simp only [ite_true]
     have : ∀ g : UInt32, ((min MAX_GLUE g ||| ClauseHeader.redundantBit) &&& ClauseHeader.redundantBit != 0) = true := by
-      intro g; simp only [bne_iff_ne, ne_eq]; unfold ClauseHeader.redundantBit; bv_decide
+      intro g; simp only [bne_iff_ne, ne_eq]; unfold ClauseHeader.redundantBit; bv_k
     exact this glue
 
 /-- Adding a large clause (original or learned, redundant or irredundant). -/

@@ -100,19 +100,19 @@ theorem binaryWatch_watchLit (w : UInt32) (h : watchIsBinary w = true) :
     binaryWatch (watchLit w) = w := by
   simp only [watchIsBinary, bne_iff_ne, ne_eq] at h
   simp only [binaryWatch, watchLit, WATCH_BINARY_BIT] at *
-  bv_decide
+  bv_k
 
 theorem blockingWatch_watchLit (w : UInt32) (h : watchIsBinary w = false) :
     blockingWatch (watchLit w) = w := by
   simp only [watchIsBinary, bne_eq_false_iff_eq] at h
   simp only [blockingWatch, watchLit, WATCH_BINARY_BIT] at *
-  bv_decide
+  bv_k
 
 theorem largeWatch_watchRef (w : UInt32) (h : watchIsBinary w = false) :
     largeWatch (watchRef w) = w := by
   simp only [watchIsBinary, bne_eq_false_iff_eq] at h
   simp only [largeWatch, watchRef, WATCH_BINARY_BIT] at *
-  bv_decide
+  bv_k
 
 theorem encode_parse : ∀ (W : List UInt32), WordsOK W → encodeWatches (parseWatches W) = W
   | [], _ => rfl

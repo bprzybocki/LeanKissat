@@ -94,11 +94,11 @@ theorem U32Vec.toArray_swap (v : U32Vec) (i j : Nat) (hi : i < v.size) (hj : j <
     · subst e1; subst e2; simp
     · subst e1
       have e2' : ¬ j = k := fun h => e2 h.symm
-      simp only [e2', ite_false, ite_true]; erw [U32Vec.getElem_set]; simp
+      simp only [e2', ite_false, ite_true]; exact (U32Vec.getElem_set _ _ _ _ _ _).trans (ite_eq_left rfl)
     · subst e2; simp [e1]
     · have e1' : ¬ i = k := fun h => e1 h.symm
       have e2' : ¬ j = k := fun h => e2 h.symm
-      simp only [e1, e2, e2', ite_false]; erw [U32Vec.getElem_set]; simp [e1']; try rfl
+      simp only [e1, e2, e2', ite_false]; exact (U32Vec.getElem_set _ _ _ _ _ _).trans (ite_eq_right e1')
 
 theorem u32Swap_perm (v : U32Vec) (i j : Nat) : (u32Swap v i j).toList.Perm v.toList := by
   by_cases hi : i < v.size

@@ -341,7 +341,7 @@ theorem shrinkLargeLoop_spec {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : N
     rw [heq] at b1 b2 b3 b4 b5 b6 b7
     simp only at b1 b2 b3 b4 b5 b6 b7
     have e : base + acc + (if tmp = 1 then 1 else 0) = base + (if tmp > 0 then acc + 1 else acc) := by
-      rcases b6 with h0 | h0 | h0 <;> rw [h0] <;> simp <;> omega
+      rcases b6 with h0 | h0 | h0 <;> rw [h0] <;> simp; omega
     rw [e] at b1
     simp only [dite_eq_ite] at ih
     obtain ⟨a1, a2, a3, a4, a5⟩ := ih b1

@@ -62,7 +62,7 @@ theorem moveSmallestLoop_spec (values : ByteArray) (level : UInt32 → UInt32) (
   | case1 pos best u k i hi b v hv =>
     intro h1 h2 h3 h4 h5 h6
     rw [moveSmallestLoop, ite_eq_left hi]; dsimp only; rw [ite_eq_left hv]
-    refine ⟨fun e => by omega, fun _ => ⟨by omega, hi, by first | rfl | trivial⟩, by first | rfl | trivial,
+    refine ⟨fun e => by omega, fun _ => ⟨by omega, hi, by rfl⟩, by rfl,
       fun hs hn => ?_⟩
     exfalso
     simp only [hs, Bool.and_false, Bool.or_false, beq_iff_eq] at hv

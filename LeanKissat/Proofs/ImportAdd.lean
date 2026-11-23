@@ -28,7 +28,7 @@ theorem importLiteral_imported {s : Solver} (hImp : ImportOK s) (ht : s.options.
     unfold importBitsAt; simpa using e2
   simp only [c1, c2, Bool.false_eq_true, ite_false, e1]
   unfold impLit extLit
-  cases l.2 <;> simp <;> omega
+  cases l.2 <;> simp; omega
 
 theorem impLit_inj {l l' : Literal Nat} (h1 : l.1 < 2 ^ 31) (h2 : l'.1 < 2 ^ 31) (h : impLit l = impLit l') :
     l = l' := by

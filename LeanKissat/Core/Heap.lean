@@ -292,11 +292,11 @@ theorem size_push (h : Heap) (idx : UInt32) :
 
 theorem size_pop (h : Heap) (idx : UInt32) (hne : 0 < h.stack.size) :
     (h.pop idx).stack.size = h.stack.size - 1 := by
-  cases h; simp only [pop]; split <;> simp [U32Vec.size_set!, U32Vec.pop, U32Vec.size_shrink] at * <;> omega
+  cases h; simp only [pop]; split <;> simp [U32Vec.size_set!, U32Vec.pop, U32Vec.size_shrink] at *
 
 theorem size_popMax (h : Heap) (hne : 0 < h.stack.size) :
     (h.popMax).2.stack.size = h.stack.size - 1 := by
-  cases h; simp only [popMax]; split <;> simp [U32Vec.size_set!, U32Vec.pop, U32Vec.size_shrink] at * <;> omega
+  cases h; simp only [popMax]; split <;> simp [U32Vec.size_set!, U32Vec.pop, U32Vec.size_shrink] at *
 
 end Heap
 end LeanKissat

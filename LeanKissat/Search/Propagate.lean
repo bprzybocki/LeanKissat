@@ -124,7 +124,7 @@ def propLoop (ignore : Option Ref) (beyond probing jump : Bool) (level : UInt32)
           (ticks + 1) res
   else ⟨ws, p, q, a, arena, delayed, s, ticks, res⟩
 termination_by ws.size - p
-decreasing_by all_goals simp_all [WVec.size_set!] <;> omega
+decreasing_by all_goals (simp_all [WVec.size_set!]; try omega)
 
 /-- `while (p != end_watches) *q++ = *p++;` -/
 def copyRest (ws : WVec) (p q : Nat) : WVec × Nat :=

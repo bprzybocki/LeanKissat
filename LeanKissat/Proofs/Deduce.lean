@@ -150,7 +150,6 @@ theorem recomputeGlue_frame (s : Solver) (ref : Ref) (limit : UInt32) :
   mvcgen invariants
   · ⇓⟨_, st⟩ => ⌜frameOf st.1 = frameOf s⌝
   · ⇓⟨_, st⟩ => ⌜frameOf st = frameOf s⌝
-  all_goals simp_all [frameOf, setFramePromote]
 
 section RG
 variable (s : Solver) (ref : Ref) (limit : UInt32)
@@ -294,7 +293,6 @@ theorem recomputeGlue_analyzed (s : Solver) (ref : Ref) (limit : UInt32) :
   mvcgen invariants
   · ⇓⟨_, st⟩ => ⌜st.1.analyzed = s.analyzed⌝
   · ⇓⟨_, st⟩ => ⌜st.analyzed = s.analyzed⌝
-  all_goals simp_all [setFramePromote]
 
 theorem markClauseAsUsed_analyzed (s : Solver) (ref : Ref) : (s.markClauseAsUsed ref).analyzed = s.analyzed := by
   unfold markClauseAsUsed recomputeAndPromote promoteClause
@@ -522,7 +520,7 @@ theorem DInv.analyze {Φ : (Nat → Bool) → Prop} {s0 : Solver} {L : Nat} (hb 
     · exact hy
   refine ⟨⟨sp1.trans h.af, ?csize, ?tail, ?ana, ?aa, ?count, h.tle, ?others, ?list⟩, ?_, mono,
     fun i hi => ((sp4 i).mp hi).imp_right (fun h => h.1)⟩
-  case csize => rw [sp3]; split <;> simp [h.csize] <;> have := h.csize <;> omega
+  case csize => rw [sp3]; split <;> simp [h.csize]
   case tail =>
     intro y hy
     rw [sp3] at hy

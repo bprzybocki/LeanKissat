@@ -120,7 +120,7 @@ theorem countRef_append (r : Ref) (a b : List WEntry) :
   induction a with
   | nil => simp [countRef]
   | cons e es ih =>
-    cases e <;> simp [countRef, ih] <;> omega
+    cases e <;> simp [countRef, ih]; omega
 
 theorem countRef_pos (r : Ref) : ∀ (L : List WEntry) (b : Lit), WEntry.large b r ∈ L →
     0 < countRef r L := by

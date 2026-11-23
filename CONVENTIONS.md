@@ -53,6 +53,27 @@ Reporting/verbose printing is ported only where needed for user-visible output
 * Watches: one `U32Vec` per literal with C's encoding (`binary` bit 31;
   large watch = blocking-literal word followed by reference word).
 
+## Code style
+Follow the Lean standard library guides: [style](https://github.com/leanprover/lean4/blob/master/doc/std/style.md)
+and [naming](https://github.com/leanprover/lean4/blob/master/doc/std/naming.md).
+For example: `fun x =>` (not `↦`/`λ`), `snake_case` theorem names built from the statement
+(`C_of_A_of_B`, `_iff`), `?`/`!` suffixes for `Option`/panicking variants, no `erw`,
+squeezed non-terminal `simp`. Exceptions and additions for this project:
+
+* **Names that mirror C.** Constants and macros keep their C spelling (`IDX`, `NOT`, `LIT`,
+  `MAX_GLUE`, `INVALID_REF`). Option and statistics fields keep Kissat's names exactly
+  (`eagersubsume`, `restartreusetrail`), because they are matched against command-line
+  strings and `--statistics` output. Ported C functions use the lowerCamelCase form of the C
+  name (`mark_fixed_literal` → `markFixedLiteral`). Local variables follow the C code
+  (`s` for the solver, `lit`, `ref`, `idx`, `level`).
+* **`unfold` and `simp only` on the solver.** The guide prefers `simp`/`rw` over `unfold`.
+  Here, `unfold` is the normal way to open one step of a large or recursive definition, and
+  goals mentioning `Solver` (≈90 fields) use `simp only`/`dsimp only`: a full `simp` or
+  `simp_all` there is slow and unstable. Terminal `simp` elsewhere is fine.
+* **Linters:** besides Lean's default linters, `lakefile.lean` enables
+  `linter.extra.unreachableTactic`, `linter.extra.unnecessarySeqFocus` and
+  `linter.extra.dupNamespace`. The build must produce no warnings.
+
 ## Proof style
 * Executable code lives in `LeanKissat/<Area>/*.lean`; specifications and proofs in
   `LeanKissat/Proofs/...` (or next to the code for small lemmas).

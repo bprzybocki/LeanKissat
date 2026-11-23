@@ -3,7 +3,9 @@ open Lake DSL
 
 package "LeanKissat" where
   version := v!"0.1.0"
-  leanOptions := #[⟨`autoImplicit, false⟩]
+  leanOptions := #[⟨`autoImplicit, false⟩,
+    ⟨`linter.extra.unreachableTactic, true⟩, ⟨`linter.extra.unnecessarySeqFocus, true⟩,
+    ⟨`linter.extra.dupNamespace, true⟩]
   moreLeancArgs := #["-O3"]
 
 require batteries from git

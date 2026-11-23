@@ -3,8 +3,8 @@ import LeanKissat.Util.BitTac
 /-
 Packed growable vectors of `UInt32`, stored little-endian in a `ByteArray`.
 
-Lean has no packed `UInt32` array; `Array UInt32` stores 8-byte boxed scalars and
-benchmarked ~2x slower than this encoding for random access (bench/ArrBench.lean).
+Lean has no packed `UInt32` array; `Array UInt32` uses 8-byte slots on a 64-bit
+machine and benchmarked ~2x slower for random access (bench/ArrBench.lean).
 Like a C stack, a `U32Vec` has a logical `size` and a capacity (`data.size / 4`), so
 shrinking is O(1) and never reallocates.
 -/
@@ -56,11 +56,63 @@ def emptyWithCapacity (n : Nat) : U32Vec := ⟨ByteArray.emptyWithCapacity (4 * 
   have := a.hsize
   decode32 a.data[4*i] a.data[4*i+1] a.data[4*i+2] a.data[4*i+3]
 
+private theorem word_index (i : Nat) (hi : 4 * i + 3 < USize.size) :
+    (i.toUSize * 4).toNat = 4 * i := by
+  have ei : i.toUSize.toNat = i := USize.toNat_ofNat_of_lt' (by omega)
+  have e4 : (4 : USize).toNat = 4 := USize.toNat_ofNat_of_lt_32 (by decide)
+  rw [USize.toNat_mul, ei, e4]
+  change (i * 4) % USize.size = 4 * i
+  rw [Nat.mod_eq_of_lt (by omega)]
+  omega
+
+private theorem word_offset (i k : Nat) (hi : 4 * i + 3 < USize.size) (hk : k ≤ 3) :
+    (i.toUSize * 4 + k.toUSize).toNat = 4 * i + k := by
+  have ek : k.toUSize.toNat = k :=
+    USize.toNat_ofNat_of_lt' (by have := USize.le_size; omega)
+  rw [USize.toNat_add, word_index i hi, ek]
+  change (4 * i + k) % USize.size = 4 * i + k
+  exact Nat.mod_eq_of_lt (by omega)
+
+/-- Read a packed word with machine-sized byte indices. The literal bound fits on
+  both supported word sizes; larger indices use the original reader. -/
+@[inline] def getFast (a : U32Vec) (i : Nat) (h : i < a.size) : UInt32 :=
+  if hs : i < 1073741824 then
+    let j := i.toUSize * 4
+    have hi : 4 * i + 3 < USize.size := by have := USize.le_size; omega
+    decode32 (a.data.uget (j + (0 : Nat).toUSize)
+        (by rw [word_offset i 0 hi (by omega)]; have := a.hsize; omega))
+      (a.data.uget (j + (1 : Nat).toUSize)
+        (by rw [word_offset i 1 hi (by omega)]; have := a.hsize; omega))
+      (a.data.uget (j + (2 : Nat).toUSize)
+        (by rw [word_offset i 2 hi (by omega)]; have := a.hsize; omega))
+      (a.data.uget (j + (3 : Nat).toUSize)
+        (by rw [word_offset i 3 hi (by omega)]; have := a.hsize; omega))
+  else
+    have := a.hsize
+    decode32 a.data[4*i] a.data[4*i+1] a.data[4*i+2] a.data[4*i+3]
+
+private theorem uget_eq_get (d : ByteArray) (i : USize) (h : i.toNat < d.size) :
+    d.uget i h = d.get i.toNat h := by cases d; rfl
+
+/-- The compiler rewrite is justified by a kernel-checked equality. -/
+@[csimp] theorem get_eq_getFast : @get = @getFast := by
+  funext a i h
+  unfold getFast
+  split
+  · rename_i hs
+    have hi : 4 * i + 3 < USize.size := by have := USize.le_size; omega
+    dsimp only
+    simp only [uget_eq_get, word_offset i 0 hi (by omega), word_offset i 1 hi (by omega),
+      word_offset i 2 hi (by omega), word_offset i 3 hi (by omega), Nat.add_zero]
+    rfl
+  · rfl
+
 instance : GetElem U32Vec Nat UInt32 (fun a i => i < a.size) where
   getElem a i h := a.get i h
 
-/-- Read with default `0` when out of bounds. -/
-@[inline] def get! (a : U32Vec) (i : Nat) : UInt32 :=
+/-- Read with default `0` when out of bounds. Keep the bounds branch out of callers
+  so it does not prevent reuse of enclosing solver records. -/
+@[noinline] def get! (a : U32Vec) (i : Nat) : UInt32 :=
   if h : i < a.size then a[i] else 0
 
 @[inline] def setBytes (d : ByteArray) (j : Nat) (v : UInt32) (h : j + 3 < d.size) : ByteArray :=
@@ -88,13 +140,104 @@ theorem getElem_setBytes (d : ByteArray) (j : Nat) (v : UInt32) (h : j + 3 < d.s
   have := a.hsize
   ⟨setBytes a.data (4*i) v (by omega), a.size, by simpa using a.hsize⟩
 
-/-- Write; no-op when out of bounds. Implemented with the (extern, branch-free)
-  `ByteArray.set!` so that no join point is created when it is used inside a
-  structure update (which would prevent in-place reuse of the outer structure). -/
+/-- Write into allocated byte storage; each out-of-bounds byte is unchanged.
+  Keep the writer behind a call so it does not prevent reuse of enclosing records. -/
 @[noinline] def set! (a : U32Vec) (i : Nat) (v : UInt32) : U32Vec :=
   let j := 4 * i
   ⟨((((a.data.set! j v.toUInt8).set! (j+1) (v >>> 8).toUInt8).set! (j+2) (v >>> 16).toUInt8).set!
       (j+3) (v >>> 24).toUInt8), a.size, by simpa using a.hsize⟩
+
+private theorem byte_offset (j k : Nat) (hj : j + 3 < USize.size) (hk : k ≤ 3) :
+    (j.toUSize + k.toUSize).toNat = j + k := by
+  have ej : j.toUSize.toNat = j := USize.toNat_ofNat_of_lt' (by omega)
+  have ek : k.toUSize.toNat = k :=
+    USize.toNat_ofNat_of_lt' (by have := USize.le_size; omega)
+  rw [USize.toNat_add, ej, ek]
+  change (j + k) % USize.size = j + k
+  exact Nat.mod_eq_of_lt (by omega)
+
+private theorem byte_uset_eq_set (d : ByteArray) (i : USize) (v : UInt8) (h : i.toNat < d.size) :
+    d.uset i v h = d.set i.toNat v h := by
+  cases d
+  simp only [ByteArray.uset, ByteArray.set, Array.uset_eq_set]
+
+private theorem bytes_uset_size (d : ByteArray) (i : USize) (v : UInt8) (h : i.toNat < d.size) :
+    (d.uset i v h).size = d.size := by
+  rw [byte_uset_eq_set]
+  exact ByteArray.size_set' ..
+
+/-- `setBytes` with machine-sized byte indices. The literal bound fits on both supported
+  word sizes; larger indices use the original writer. -/
+@[inline] def setBytesFast (d : ByteArray) (j : Nat) (v : UInt32) (h : j + 3 < d.size) : ByteArray :=
+  if hs : j < 4294967293 then
+    let u := j.toUSize
+    have hj : j + 3 < USize.size := by have := USize.le_size; omega
+    let d1 := d.uset (u + (0 : Nat).toUSize) v.toUInt8
+      (by rw [byte_offset j 0 hj (by omega)]; omega)
+    let d2 := d1.uset (u + (1 : Nat).toUSize) (v >>> 8).toUInt8
+      (by simp only [d1, bytes_uset_size]; rw [byte_offset j 1 hj (by omega)]; omega)
+    let d3 := d2.uset (u + (2 : Nat).toUSize) (v >>> 16).toUInt8
+      (by simp only [d2, d1, bytes_uset_size]; rw [byte_offset j 2 hj (by omega)]; omega)
+    d3.uset (u + (3 : Nat).toUSize) (v >>> 24).toUInt8
+      (by simp only [d3, d2, d1, bytes_uset_size]; rw [byte_offset j 3 hj (by omega)]; omega)
+  else
+    let d1 := d.set j v.toUInt8 (by omega)
+    let d2 := d1.set (j+1) (v >>> 8).toUInt8 (by simp [d1]; omega)
+    let d3 := d2.set (j+2) (v >>> 16).toUInt8 (by simp [d2, d1]; omega)
+    d3.set (j+3) (v >>> 24).toUInt8 (by simp [d3, d2, d1]; omega)
+
+@[csimp] theorem setBytes_eq_setBytesFast : @setBytes = @setBytesFast := by
+  funext d j v h
+  unfold setBytesFast
+  split
+  · rename_i hs
+    have hj : j + 3 < USize.size := by have := USize.le_size; omega
+    dsimp only
+    simp only [byte_uset_eq_set, byte_offset j 0 hj (by omega), byte_offset j 1 hj (by omega),
+      byte_offset j 2 hj (by omega), byte_offset j 3 hj (by omega), Nat.add_zero]
+    rfl
+  · rfl
+
+private theorem byte_set!_eq_set (d : ByteArray) (i : Nat) (v : UInt8) (h : i < d.size) :
+    d.set! i v = d.set i v h := by
+  cases d with
+  | mk data =>
+    have hi : i < data.size := h
+    simp only [ByteArray.set!, ByteArray.set, Array.set!_eq_setIfInBounds,
+      Array.setIfInBounds_def, hi, dite_true]
+
+private theorem setBytes_eq_four (d : ByteArray) (j : Nat) (v : UInt32) (h : j + 3 < d.size) :
+    setBytes d j v h =
+      ((((d.set! j v.toUInt8).set! (j+1) (v >>> 8).toUInt8).set! (j+2) (v >>> 16).toUInt8).set!
+        (j+3) (v >>> 24).toUInt8) := by
+  unfold setBytes
+  have h0 : j < d.size := by omega
+  rw [byte_set!_eq_set d j _ h0]
+  rw [byte_set!_eq_set _ (j+1) _ (by simp only [ByteArray.size_set']; omega)]
+  rw [byte_set!_eq_set _ (j+2) _ (by simp only [ByteArray.size_set']; omega)]
+  rw [byte_set!_eq_set _ (j+3) _ (by simp only [ByteArray.size_set']; omega)]
+
+/-- `set!` using `setBytesFast` when the whole word is in bounds. -/
+@[noinline] def setFast (a : U32Vec) (i : Nat) (v : UInt32) : U32Vec :=
+  let j := 4 * i
+  if h : j + 3 < a.data.size then
+    ⟨setBytesFast a.data j v h, a.size,
+      by rw [← setBytes_eq_setBytesFast, size_setBytes]; exact a.hsize⟩
+  else
+    ⟨((((a.data.set! j v.toUInt8).set! (j+1) (v >>> 8).toUInt8).set! (j+2) (v >>> 16).toUInt8).set!
+      (j+3) (v >>> 24).toUInt8), a.size, by simpa using a.hsize⟩
+
+@[csimp] theorem set!_eq_setFast : @set! = @setFast := by
+  funext a i v
+  unfold setFast
+  dsimp only
+  split
+  · rename_i h
+    simp only [set!, U32Vec.mk.injEq]
+    constructor
+    · rw [← setBytes_eq_setBytesFast, setBytes_eq_four]
+    · trivial
+  · rfl
 
 /-- Grow the byte buffer by four zero bytes. -/
 @[inline] def pushZero4 (d : ByteArray) : ByteArray := (((d.push 0).push 0).push 0).push 0

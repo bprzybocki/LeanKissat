@@ -25,3 +25,9 @@ lean_exe «sorttest» where
 
 lean_exe scanbench where
   root := `bench2.ScanBench
+
+lean_exe phasebench where
+  root := `bench2.PhaseBench
+
+lean_exe wordbench where
+  root := `bench2.WordBench

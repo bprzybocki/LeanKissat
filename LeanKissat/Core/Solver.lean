@@ -285,6 +285,17 @@ namespace Solver
   let w := if on then w ||| b else w &&& ~~~b
   { s with asg := { s.asg with aBits := s.asg.aBits.set! idx.toNat w } }
 
+@[noinline] private def updateABit (a : Asg) (idx : UInt32) (b : UInt8) (on : Bool) : Asg :=
+  let w := a.aBits.get! idx.toNat
+  let w := if on then w ||| b else w &&& ~~~b
+  { a with aBits := a.aBits.set! idx.toNat w }
+
+/-- Keep the assignment-record update behind a call so the outer record is reusable. -/
+@[inline] def setABitFast (s : Solver) (idx : UInt32) (b : UInt8) (on : Bool) : Solver :=
+  { s with asg := updateABit s.asg idx b on }
+
+@[csimp] theorem setABit_eq_setABitFast : @setABit = @setABitFast := rfl
+
 @[inline] def varFlags (s : Solver) (idx : UInt32) : UInt32 := s.flags.get! idx.toNat
 @[inline] def isActive (s : Solver) (idx : UInt32) : Bool := (s.varFlags idx &&& VarFlags.active) != 0
 @[inline] def setVarFlag (s : Solver) (idx : UInt32) (b : UInt32) (on : Bool) : Solver :=

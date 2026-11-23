@@ -333,6 +333,46 @@ def analyzeLiteral (s : Solver) (lit : Lit) : Bool × Solver :=
   if used != 0 then (false, s)
   else (false, { s with levels := s.levels.push level })
 
+@[noinline] private def incAntecedent (s : Solver) : Solver :=
+  { s with antecedentSize := s.antecedentSize + 1 }
+
+@[noinline] private def markAnalyzed (a : Asg) (idx : UInt32) : Asg :=
+  { a with aBits := a.aBits.set! idx.toNat (a.aBits.get! idx.toNat ||| ABits.analyzed) }
+
+@[noinline] private def addAnalyzed (s : Solver) (idx : UInt32) : Solver :=
+  { s with
+    asg := markAnalyzed s.asg idx
+    analyzed := s.analyzed.push idx
+    resolventSize := s.resolventSize + 1 }
+
+@[noinline] private def addClauseLiteral (s : Solver) (lit : Lit) : Solver :=
+  { s with clause := s.clause.push lit }
+
+@[noinline] private def incUsedFrame (s : Solver) (level used : UInt32) : Solver :=
+  { s with frameUsed := s.frameUsed.set! level.toNat (used + 1) }
+
+@[noinline] private def addAnalysisLevel (s : Solver) (level : UInt32) : Solver :=
+  { s with levels := s.levels.push level }
+
+/-- Isolate updates from control flow so the compiler can reuse the solver record. -/
+def analyzeLiteralFast (s : Solver) (lit : Lit) : Bool × Solver :=
+  let idx := IDX lit
+  let level := s.levelIdx idx
+  if level == 0 then (false, s) else
+  let s := incAntecedent s
+  if s.isAnalyzed idx then (false, s) else
+  let s := addAnalyzed s idx
+  if level == s.level then (true, s) else
+  let s := addClauseLiteral s lit
+  let used := s.frameUsedAt level
+  let s := incUsedFrame s level used
+  if used != 0 then (false, s)
+  else (false, addAnalysisLevel s level)
+
+@[csimp] theorem analyzeLiteral_eq_analyzeLiteralFast : @analyzeLiteral = @analyzeLiteralFast := by
+  funext s lit
+  rfl
+
 /-- Find the next analyzed literal on the current level going down the trail. -/
 def findUip (s : Solver) (t : Nat) : Lit × Nat :=
   if h : t = 0 then (INVALID_LIT, 0) else

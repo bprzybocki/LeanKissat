@@ -15,6 +15,9 @@ Reporting/verbose printing is ported only where needed for user-visible output
   Loops over arrays: `for` over ranges / `Nat.fold` / well-founded recursion on
   `size - i`. Never use `while true` style loops without a measure.
 * Dependencies: Lean core + `Std` + `Batteries` only (no Mathlib).
+* A faster executable version of a definition may be registered with `@[csimp]`, but only
+  with a kernel-checked equality (`@[csimp] theorem f_eq_fFast : @f = @fFast`). Proofs keep
+  reasoning about `f`; the compiler uses `fFast`.
 
 ## Faithfulness
 * The port must follow the *same search trajectory* as C Kissat: same order of

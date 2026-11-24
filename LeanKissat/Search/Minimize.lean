@@ -125,6 +125,76 @@ def clearBitsDown (s : Solver) (v : U32Vec) (b : UInt8) (n k : Nat) : Solver :=
   else s
 termination_by n - k
 
+/-- `clearBitsUp` on the assignment bits alone. -/
+def clearBitsUpBytes (bits : ByteArray) (v : U32Vec) (b : UInt8) (i n : Nat) : ByteArray :=
+  if _h : i < n then
+    let idx := (v.get! i).toNat
+    clearBitsUpBytes (bits.set! idx (bits.get! idx &&& ~~~b)) v b (i + 1) n
+  else bits
+termination_by n - i
+
+/-- `clearBitsDown` on the assignment bits alone. -/
+def clearBitsDownBytes (bits : ByteArray) (v : U32Vec) (b : UInt8) (n k : Nat) : ByteArray :=
+  if _h : k < n then
+    let idx := (v.get! (n - 1 - k)).toNat
+    clearBitsDownBytes (bits.set! idx (bits.get! idx &&& ~~~b)) v b n (k + 1)
+  else bits
+termination_by n - k
+
+/-- Executable version of `clearBitsUp`; see `clearBitsUp_eq_clearBitsUpFast`. -/
+def clearBitsUpFast (s : Solver) (v : U32Vec) (b : UInt8) (i n : Nat) : Solver :=
+  let a := s.asg
+  let s := { s with asg := {} }
+  let bits := a.aBits
+  let a := { a with aBits := .empty }
+  { s with asg := { a with aBits := clearBitsUpBytes bits v b i n } }
+
+/-- Executable version of `clearBitsDown`; see `clearBitsDown_eq_clearBitsDownFast`. -/
+def clearBitsDownFast (s : Solver) (v : U32Vec) (b : UInt8) (n k : Nat) : Solver :=
+  let a := s.asg
+  let s := { s with asg := {} }
+  let bits := a.aBits
+  let a := { a with aBits := .empty }
+  { s with asg := { a with aBits := clearBitsDownBytes bits v b n k } }
+
+private theorem clearBitsUp_bytes (s : Solver) (v : U32Vec) (b : UInt8) (i n : Nat) :
+    s.clearBitsUp v b i n =
+      { s with asg := { s.asg with aBits := clearBitsUpBytes s.asg.aBits v b i n } } := by
+  fun_induction s.clearBitsUp v b i n with
+  | case1 s i hi ih =>
+    rw [ih]
+    conv => rhs; unfold clearBitsUpBytes
+    rw [dite_eq_left hi]
+    rfl
+  | case2 s i hi =>
+    conv => rhs; unfold clearBitsUpBytes
+    rw [dite_eq_right hi]
+
+private theorem clearBitsDown_bytes (s : Solver) (v : U32Vec) (b : UInt8) (n k : Nat) :
+    s.clearBitsDown v b n k =
+      { s with asg := { s.asg with aBits := clearBitsDownBytes s.asg.aBits v b n k } } := by
+  fun_induction s.clearBitsDown v b n k with
+  | case1 s k hk ih =>
+    rw [ih]
+    conv => rhs; unfold clearBitsDownBytes
+    rw [dite_eq_left hk]
+    rfl
+  | case2 s k hk =>
+    conv => rhs; unfold clearBitsDownBytes
+    rw [dite_eq_right hk]
+
+/-- The compiler runs `clearBitsUpFast`; proofs reason about `clearBitsUp`. -/
+@[csimp] theorem clearBitsUp_eq_clearBitsUpFast : @clearBitsUp = @clearBitsUpFast := by
+  funext s v b i n
+  rw [clearBitsUp_bytes]
+  rfl
+
+/-- The compiler runs `clearBitsDownFast`; proofs reason about `clearBitsDown`. -/
+@[csimp] theorem clearBitsDown_eq_clearBitsDownFast : @clearBitsDown = @clearBitsDownFast := by
+  funext s v b n k
+  rw [clearBitsDown_bytes]
+  rfl
+
 /-- Port of `kissat_reset_poisoned` (minimize.c). -/
 def resetPoisoned (s : Solver) : Solver :=
   let s := s.clearBitsUp s.poisoned ABits.poisoned 0 s.poisoned.size

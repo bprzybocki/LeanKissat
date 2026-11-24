@@ -336,7 +336,7 @@ def bumpScoreIncrement (s : Solver) : Solver :=
   { s with scores := scores, scinc := scinc }
 
 /-- `bump_analyzed_variable_score` (bump.c) on the score heap and increment. -/
-def bumpVarPair (scores : Heap) (scinc : Float) (idx : UInt32) : Heap × Float :=
+@[inline] def bumpVarPair (scores : Heap) (scinc : Float) (idx : UInt32) : Heap × Float :=
   let oldScore := scores.getScore idx
   let newScore := oldScore + scinc
   let scores := scores.update idx newScore

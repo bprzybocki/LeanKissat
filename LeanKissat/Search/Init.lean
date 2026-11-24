@@ -32,6 +32,38 @@ def clearClauseMarks (s : Solver) (i : Nat) : Solver :=
   else s
 termination_by s.clause.size - i
 
+/-- `clearClauseMarks` on the marks alone. -/
+def clearClauseMarksBytes (marks : ByteArray) (clause : U32Vec) (i : Nat) : ByteArray :=
+  if i < clause.size then
+    let lit := clause.get! i
+    clearClauseMarksBytes ((marks.set! lit.toNat 0).set! (NOT lit).toNat 0) clause (i + 1)
+  else marks
+termination_by clause.size - i
+
+/-- Executable version of `clearClauseMarks`; see `clearClauseMarks_eq_clearClauseMarksFast`. -/
+def clearClauseMarksFast (s : Solver) (i : Nat) : Solver :=
+  let marks := s.marks
+  let s := { s with marks := .empty }
+  { s with marks := clearClauseMarksBytes marks s.clause i }
+
+private theorem clearClauseMarks_bytes (s : Solver) (i : Nat) :
+    s.clearClauseMarks i = { s with marks := clearClauseMarksBytes s.marks s.clause i } := by
+  fun_induction s.clearClauseMarks i with
+  | case1 s i hi lit ih =>
+    rw [ih]
+    conv => rhs; unfold clearClauseMarksBytes
+    rw [ite_eq_left hi]
+  | case2 s i hi =>
+    conv => rhs; unfold clearClauseMarksBytes
+    rw [ite_eq_right hi]
+
+/-- The compiler runs `clearClauseMarksFast`; proofs reason about `clearClauseMarks`. -/
+@[csimp] theorem clearClauseMarks_eq_clearClauseMarksFast :
+    @clearClauseMarks = @clearClauseMarksFast := by
+  funext s i
+  rw [clearClauseMarks_bytes]
+  rfl
+
 /-- The assignment after adding a clause whose first literal is unassigned or false. -/
 def addAssign (s : Solver) (isize : Nat) (a b : Lit) (res : Ref) : Solver :=
   if isize == 2 then s.assignBinary a b else s.assignReference a res

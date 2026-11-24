@@ -356,16 +356,6 @@ end LeanKissat
 namespace LeanKissat
 namespace Solver
 
-theorem propagateTrailLoop_none (b : Nat) : ∀ (s : Solver) (i : Nat),
-    propagateTrailLoop b none s i = searchPropagateLoop b s i := by
-  intro s i
-  fun_induction searchPropagateLoop b s i with
-  | case1 s i hi lit s' res hpl hres =>
-    rw [propagateTrailLoop, dite_eq_left hi]; simp only [lit, hpl, hres]; rfl
-  | case2 s i hi lit s' res hpl hres ih =>
-    rw [propagateTrailLoop, dite_eq_left hi]; simp only [lit, hpl]; rw [ite_eq_right hres]; exact ih
-  | case3 s i hi => rw [propagateTrailLoop, dite_eq_right hi]
-
 theorem SFr.symm {s t : Solver} (h : SFr t s) : SFr s t :=
   ⟨⟨h.same.asg.symm, h.same.arena.symm, h.same.watches.symm, h.same.delayed.symm, h.same.vars.symm,
     h.same.level.symm, h.same.frameTrail.symm, h.same.propagate.symm, h.same.options.symm⟩,

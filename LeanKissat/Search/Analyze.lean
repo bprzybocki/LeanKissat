@@ -394,6 +394,130 @@ def analyzeReasonLits (s : Solver) (ref : Ref) (uip : Lit) (i n : Nat) (u : Nat)
   else (u, s)
 termination_by n - i
 
+/-- The solver fields that `analyzeLiteral` updates, taken out of the solver for the
+  literal loops of conflict analysis. -/
+structure AnaState where
+  aBits : ByteArray
+  analyzed : U32Vec
+  clause : U32Vec
+  frameUsed : U32Vec
+  levels : U32Vec
+  antecedentSize : UInt32
+  resolventSize : UInt32
+
+/-- The analysis fields of `s`. -/
+@[inline] def anaState (s : Solver) : AnaState :=
+  ⟨s.asg.aBits, s.analyzed, s.clause, s.frameUsed, s.levels, s.antecedentSize, s.resolventSize⟩
+
+/-- `s` with its analysis fields replaced by `st`. -/
+@[inline] def withAnaState (s : Solver) (st : AnaState) : Solver :=
+  { s with asg := { s.asg with aBits := st.aBits }, analyzed := st.analyzed, clause := st.clause,
+           frameUsed := st.frameUsed, levels := st.levels, antecedentSize := st.antecedentSize,
+           resolventSize := st.resolventSize }
+
+/-- Take the analysis fields out of `s`. -/
+@[inline] def detachAna (s : Solver) : Solver × AnaState :=
+  let a := s.asg
+  let st : AnaState :=
+    ⟨a.aBits, s.analyzed, s.clause, s.frameUsed, s.levels, s.antecedentSize, s.resolventSize⟩
+  let s := { s with asg := {}, analyzed := .empty, clause := .empty, frameUsed := .empty,
+                    levels := .empty }
+  let a := { a with aBits := .empty }
+  ({ s with asg := a }, st)
+
+/-- `analyzeLiteral` on the detached state; `aLevel` and `level0` are the solver's
+  assignment levels and decision level. -/
+@[inline] def analyzeLiteralDetached (aLevel : U32Vec) (level0 : UInt32) (st : AnaState)
+    (lit : Lit) : Bool × AnaState :=
+  let idx := IDX lit
+  let level := aLevel.get! idx.toNat
+  if level == 0 then (false, st) else
+  let st := { st with antecedentSize := st.antecedentSize + 1 }
+  let w := st.aBits.get! idx.toNat
+  if (w &&& ABits.analyzed) != 0 then (false, st) else
+  let st := { st with aBits := st.aBits.set! idx.toNat (w ||| ABits.analyzed),
+                      analyzed := st.analyzed.push idx, resolventSize := st.resolventSize + 1 }
+  if level == level0 then (true, st) else
+  let st := { st with clause := st.clause.push lit }
+  let used := st.frameUsed.get! level.toNat
+  let st := { st with frameUsed := st.frameUsed.set! level.toNat (used + 1) }
+  if used != 0 then (false, st)
+  else (false, { st with levels := st.levels.push level })
+
+/-- `analyzeReasonLits` on the detached state. -/
+def analyzeReasonLitsDetached (arena : Arena) (aLevel : U32Vec) (level0 : UInt32) (ref : Ref)
+    (uip : Lit) (st : AnaState) (i n u : Nat) : Nat × AnaState :=
+  if _h : i < n then
+    let lit := arena.lit ref i
+    if lit == uip then analyzeReasonLitsDetached arena aLevel level0 ref uip st (i + 1) n u
+    else
+      let (b, st) := analyzeLiteralDetached aLevel level0 st lit
+      analyzeReasonLitsDetached arena aLevel level0 ref uip st (i + 1) n (if b then u + 1 else u)
+  else (u, st)
+termination_by n - i
+
+/-- Executable version of `analyzeReasonLits`; see
+  `analyzeReasonLits_eq_analyzeReasonLitsFast`. -/
+def analyzeReasonLitsFast (s : Solver) (ref : Ref) (uip : Lit) (i n u : Nat) : Nat × Solver :=
+  let (s, st) := detachAna s
+  let (u, st) := analyzeReasonLitsDetached s.arena s.asg.aLevel s.level ref uip st i n u
+  (u, s.withAnaState st)
+
+private theorem analyzeLiteral_detached (s : Solver) (lit : Lit) :
+    s.analyzeLiteral lit =
+      let r := analyzeLiteralDetached s.asg.aLevel s.level s.anaState lit
+      (r.1, s.withAnaState r.2) := by
+  simp only [analyzeLiteral, analyzeLiteralDetached, levelIdx, isAnalyzed, abit, abits,
+    frameUsedAt, pushAnalyzed, setABit, anaState, withAnaState, ↓reduceIte]
+  by_cases h1 : (s.asg.aLevel.get! (IDX lit).toNat == 0) = true
+  · simp only [h1, ↓reduceIte]
+  simp only [h1, ↓reduceIte, Bool.false_eq_true]
+  by_cases h2 : (s.asg.aBits.get! (IDX lit).toNat &&& ABits.analyzed != 0) = true
+  · simp only [h2, ↓reduceIte]
+  simp only [h2, ↓reduceIte, Bool.false_eq_true]
+  by_cases h3 : (s.asg.aLevel.get! (IDX lit).toNat == s.level) = true
+  · simp only [h3, ↓reduceIte]
+  simp only [h3, ↓reduceIte, Bool.false_eq_true]
+  by_cases h4 : (s.frameUsed.get! (s.asg.aLevel.get! (IDX lit).toNat).toNat != 0) = true
+  · simp only [h4, ↓reduceIte]
+  simp only [h4, ↓reduceIte, Bool.false_eq_true]
+
+private theorem analyzeReasonLits_detached (s : Solver) (ref : Ref) (uip : Lit) (i n u : Nat) :
+    s.analyzeReasonLits ref uip i n u =
+      let r := analyzeReasonLitsDetached s.arena s.asg.aLevel s.level ref uip s.anaState i n u
+      (r.1, s.withAnaState r.2) := by
+  fun_induction s.analyzeReasonLits ref uip i n u
+  case case1 s i u hi lit heq ih =>
+    rw [ih]
+    conv => rhs; unfold analyzeReasonLitsDetached
+    rw [dite_eq_left hi]
+    dsimp only
+    rw [ite_eq_left heq]
+  case case2 s i u hi lit hne b s' hx ih =>
+    rw [analyzeLiteral_detached] at hx
+    conv => rhs; unfold analyzeReasonLitsDetached
+    rw [dite_eq_left hi]
+    dsimp only
+    rw [ite_eq_right hne]
+    generalize analyzeLiteralDetached s.asg.aLevel s.level s.anaState (s.arena.lit ref i) = r at hx ⊢
+    obtain ⟨b', st⟩ := r
+    simp only [Prod.mk.injEq] at hx
+    obtain ⟨rfl, rfl⟩ := hx
+    simp only [dite_eq_ite] at ih
+    rw [ih]
+    rfl
+  case case3 s i u hi =>
+    conv => rhs; unfold analyzeReasonLitsDetached
+    rw [dite_eq_right hi]
+    rfl
+
+/-- The compiler runs `analyzeReasonLitsFast`; proofs reason about `analyzeReasonLits`. -/
+@[csimp] theorem analyzeReasonLits_eq_analyzeReasonLitsFast :
+    @analyzeReasonLits = @analyzeReasonLitsFast := by
+  funext s ref uip i n u
+  rw [analyzeReasonLits_detached]
+  rfl
+
 /-- The literal loop over the conflict in `kissat_deduce_first_uip_clause`. -/
 def analyzeConflictLits (s : Solver) (c : CRef) (i n : Nat) (unres csize : Nat) : Nat × Nat × Solver :=
   if _h : i < n then

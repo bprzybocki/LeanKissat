@@ -65,6 +65,86 @@ def backtrackLoop (a : Asg) (s : Solver) (newLevel : UInt32) (p q stop : Nat) : 
   else (a, s, q)
 termination_by stop - p
 
+/-- Result of `backtrackLoopDetached`: the assignment, the score heap, the queue and the
+  new trail size. -/
+structure BacktrackResult where
+  a : Asg
+  scores : Heap
+  queue : Queue
+  q : Nat
+
+/-- `backtrackLoop` with the score heap and the queue taken out of the solver, so that
+  unassigning a literal does not rebuild the solver record. -/
+def backtrackLoopDetached (a : Asg) (stable : Bool) (scores : Heap) (queue : Queue)
+    (newLevel : UInt32) (p q stop : Nat) : BacktrackResult :=
+  if h : p < stop then
+    let lit := a.trail.get! p
+    let idx := IDX lit
+    let level := a.aLevel.get! idx.toNat
+    if level ≤ newLevel then
+      let a := { a with
+        aTrail := a.aTrail.set! idx.toNat (UInt32.ofNat q)
+        trail := a.trail.set! q lit }
+      backtrackLoopDetached a stable scores queue newLevel (p + 1) (q + 1) stop
+    else
+      let notLit := NOT lit
+      let a := { a with
+        values := (a.values.set! lit.toNat 0).set! notLit.toNat 0
+        unassigned := a.unassigned + 1 }
+      if stable then
+        let scores := if !scores.contains idx then scores.push idx else scores
+        backtrackLoopDetached a stable scores queue newLevel (p + 1) q stop
+      else
+        backtrackLoopDetached a stable scores (queue.addUnassignedBack idx) newLevel (p + 1) q
+          stop
+  else ⟨a, scores, queue, q⟩
+termination_by stop - p
+
+/-- Executable version of `backtrackLoop`; see `backtrackLoop_eq_backtrackLoopFast`. -/
+def backtrackLoopFast (a : Asg) (s : Solver) (newLevel : UInt32) (p q stop : Nat) :
+    Asg × Solver × Nat :=
+  let scores := s.scores
+  let queue := s.queue
+  let s := { s with scores := {}, queue := {} }
+  match backtrackLoopDetached a s.stable scores queue newLevel p q stop with
+  | ⟨a, scores, queue, q⟩ => (a, { s with scores := scores, queue := queue }, q)
+
+private theorem backtrackLoop_eq_detached (a : Asg) (s : Solver) (newLevel : UInt32)
+    (p q stop : Nat) :
+    backtrackLoop a s newLevel p q stop =
+      let r := backtrackLoopDetached a s.stable s.scores s.queue newLevel p q stop
+      (r.a, { s with scores := r.scores, queue := r.queue }, r.q) := by
+  fun_induction backtrackLoop a s newLevel p q stop with
+  | case1 a s p q hp lit idx level hkeep a' ih =>
+    rw [ih]
+    conv => rhs; unfold backtrackLoopDetached
+    rw [dite_eq_left hp]
+    dsimp only
+    rw [ite_eq_left hkeep]
+  | case2 a s p q hp lit idx level hkeep notLit a' s' ih =>
+    rw [ih]
+    conv => rhs; unfold backtrackLoopDetached
+    rw [dite_eq_left hp]
+    dsimp only
+    rw [ite_eq_right hkeep]
+    simp only [s']
+    by_cases hs : s.stable = true
+    · by_cases hc : (!s.scores.contains idx) = true
+      · simp only [hs, hc, ↓reduceIte, ↓reduceDIte]
+        rw [ite_eq_left hc]
+      · simp only [hs, hc, ↓reduceIte, ↓reduceDIte, Bool.false_eq_true]
+        rw [ite_eq_right hc]
+    · simp only [hs, ↓reduceIte, ↓reduceDIte, Bool.false_eq_true]
+      rfl
+  | case3 a s p q hp =>
+    rw [backtrackLoopDetached, dite_eq_right hp]
+
+/-- The compiler runs `backtrackLoopFast`; proofs reason about `backtrackLoop`. -/
+@[csimp] theorem backtrackLoop_eq_backtrackLoopFast : @backtrackLoop = @backtrackLoopFast := by
+  funext a s newLevel p q stop
+  rw [backtrackLoop_eq_detached]
+  rfl
+
 /-- Port of `kissat_backtrack_without_updating_phases` (backtrack.c). -/
 def backtrackWithoutUpdatingPhases (s : Solver) (newLevel : UInt32) : Solver :=
   if s.level == newLevel then s else
